@@ -20,13 +20,13 @@
     text-align: center;
     border-bottom: 2px solid #0f3460;
   }
-  h1 { font-size: 1.45rem; }
+  h1 { font-size: 1.4rem; }
   .subtitle { font-size: 0.88rem; opacity: 0.85; margin-top: 4px; }
   
   .main { display: flex; flex: 1; overflow: hidden; }
   
   .sidebar {
-    width: 290px;
+    width: 300px;
     background: #16213e;
     padding: 16px;
     overflow-y: auto;
@@ -59,8 +59,8 @@
     background: #6c5ce7; 
     color: white; 
     width: 100%; 
-    margin-top: 10px;
-    padding: 11px;
+    margin-top: 12px;
+    padding: 12px;
   }
   button:hover { filter: brightness(1.12); }
   
@@ -77,6 +77,16 @@
     margin: 5px 0;
   }
   
+  .tip {
+    background: #0f3460;
+    border-left: 4px solid #e94560;
+    padding: 10px;
+    margin-top: 16px;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    border-radius: 0 6px 6px 0;
+  }
+  
   .canvas-area {
     flex: 1;
     display: flex;
@@ -86,32 +96,43 @@
   canvas { background: #f8f9fa; display: block; }
   #scene { width: 100%; height: 62%; }
   #graph { width: 100%; height: 38%; border-top: 2px solid #333; }
+
+  /* Modal */
+  #resModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.82);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
 </style>
 </head>
 <body>
 
 <header>
   <h1>Péndulo de Pohl — Oscilaciones Forzadas (PHYWE)</h1>
-  <div class="subtitle">Guía P2132785 | Motor → Biela → Palanca → Muelle → Disco</div>
+  <div class="subtitle">Guía P2132785 | Encuentra tú mismo la resonancia</div>
 </header>
 
 <div class="main">
   <div class="sidebar">
     <div class="control-group">
       <label>Velocidad del motor (RPM)</label>
-      <input type="range" id="rpm" min="0" max="100" step="0.5" value="30">
-      <div class="value" id="rpmVal">30.0 RPM</div>
+      <input type="range" id="rpm" min="0" max="100" step="0.5" value="0">
+      <div class="value" id="rpmVal">0.0 RPM</div>
     </div>
 
     <div class="control-group">
       <label>Corriente del freno I<sub>B</sub> (A)</label>
-      <input type="range" id="current" min="0" max="2.5" step="0.05" value="0.23">
-      <div class="value" id="currentVal">0.23 A</div>
+      <input type="range" id="current" min="0" max="2.5" step="0.05" value="0.00">
+      <div class="value" id="currentVal">0.00 A</div>
     </div>
 
     <div class="control-group">
       <label>F<sub>0</sub> (amplitud de excitación)</label>
-      <input type="number" id="f0" value="2.8" step="0.1" style="width:100%; padding:7px; border-radius:4px; border:none; font-size:1rem;">
+      <input type="number" id="f0" value="2.5" step="0.1" style="width:100%; padding:7px; border-radius:4px; border:none; font-size:1rem;">
     </div>
 
     <div class="buttons">
@@ -127,7 +148,13 @@
       <div><span>f motor</span><span id="freq">0.000 Hz</span></div>
       <div><span>δ</span><span id="delta">0.000 s⁻¹</span></div>
       <div><span>φ disco</span><span id="phi">0.00 °</span></div>
-      <div style="margin-top:8px;" id="regime">Subamortiguado</div>
+      <div style="margin-top:8px;" id="regime">Sin amortiguamiento</div>
+    </div>
+
+    <div class="tip">
+      <strong>Consejo:</strong> Empieza con I_B = 0.23 A o 0.45 A.<br>
+      Sube el RPM poco a poco y busca dónde la amplitud es máxima.<br>
+      La resonancia está cerca de 30 RPM.
     </div>
   </div>
 
@@ -137,36 +164,63 @@
   </div>
 </div>
 
-<!-- Modal de resonancia -->
-<div id="resModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:100; align-items:center; justify-content:center;">
-  <div style="background:white; padding:20px; border-radius:10px; max-width:900px; width:95%;">
-    <h2 style="color:#111; margin-bottom:10px;">Curva de Resonancia (según guía PHYWE)</h2>
-    <canvas id="resCanvas" width="850" height="420" style="width:100%; background:#fff;"></canvas>
-    <button onclick="document.getElementById('resModal').style.display='none'" 
-            style="margin-top:12px; padding:10px 20px; background:#d63031; color:white; border:none; border-radius:6px; cursor:pointer;">
-      Cerrar
-    </button>
+<!-- Modal Resonancia Interactivo -->
+<div id="resModal">
+  <div style="background:white; padding:20px; border-radius:12px; max-width:960px; width:96%; color:#111;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h2 style="margin:0; font-size:1.3rem;">Curva de Resonancia Interactiva</h2>
+      <button onclick="document.getElementById('resModal').style.display='none'" 
+              style="background:#d63031; color:white; border:none; border-radius:6px; padding:8px 16px; cursor:pointer; font-weight:600;">
+        Cerrar
+      </button>
+    </div>
+
+    <div style="display:flex; gap:24px; margin-bottom:14px; flex-wrap:wrap; align-items:center;">
+      <div>
+        <label style="font-size:0.9rem; color:#555;">I_B (A)</label><br>
+        <input type="range" id="resIb" min="0" max="2.5" step="0.05" value="0.23" style="width:190px;">
+        <span id="resIbVal" style="font-family:monospace; margin-left:6px;">0.23 A</span>
+      </div>
+      <div>
+        <label style="font-size:0.9rem; color:#555;">F₀</label><br>
+        <input type="range" id="resF0" min="0.5" max="6" step="0.1" value="2.8" style="width:190px;">
+        <span id="resF0Val" style="font-family:monospace; margin-left:6px;">2.8</span>
+      </div>
+      <button onclick="drawResonance()" style="padding:9px 20px; background:#6c5ce7; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
+        Actualizar
+      </button>
+    </div>
+
+    <canvas id="resCanvas" width="900" height="460" style="width:100%; background:#fff; border:1px solid #ddd;"></canvas>
+    <p style="font-size:0.84rem; color:#666; margin-top:10px;">
+      El eje vertical se ajusta automáticamente → el máximo nunca se corta.
+    </p>
   </div>
 </div>
 
 <script>
-const OMEGA0 = 3.20;
+const OMEGA0 = 3.20;   // valor de la guía PHYWE (T0 ≈ 1.962 s)
 
 function dampingFromCurrent(Ib) {
-  // Calibrado aproximadamente a los valores de la guía
-  const xp = [0.0, 0.23, 0.45, 0.80, 2.00, 2.30];
-  const yp = [0.05, 0.18, 0.33, 0.67, OMEGA0, 1.35*OMEGA0];
-  for (let i = 0; i < xp.length-1; i++) {
-    if (Ib >= xp[i] && Ib <= xp[i+1]) {
-      const t = (Ib - xp[i]) / (xp[i+1] - xp[i]);
-      return yp[i] + t * (yp[i+1] - yp[i]);
+  const points = [
+    [0.00, 0.02],
+    [0.23, 0.18],
+    [0.45, 0.33],
+    [0.80, 0.67],
+    [2.00, 3.20],
+    [2.30, 4.20]
+  ];
+  for (let i = 0; i < points.length - 1; i++) {
+    if (Ib >= points[i][0] && Ib <= points[i+1][0]) {
+      const t = (Ib - points[i][0]) / (points[i+1][0] - points[i][0]);
+      return points[i][1] + t * (points[i+1][1] - points[i][1]);
     }
   }
-  return yp[yp.length-1];
+  return points[points.length-1][1];
 }
 
 let running = false;
-let phi = 10 * Math.PI/180;
+let phi = 5 * Math.PI / 180;
 let omega = 0;
 let motorPhase = 0;
 let simT = 0;
@@ -202,7 +256,7 @@ currentSlider.oninput = () => {
 function getControls() {
   const rpm = +rpmSlider.value;
   const Ib = +currentSlider.value;
-  const f0 = +f0Input.value || 2.8;
+  const f0 = +f0Input.value || 2.5;
   const wa = 2 * Math.PI * rpm / 60;
   const delta = dampingFromCurrent(Ib);
   return { rpm, Ib, f0, wa, delta };
@@ -215,10 +269,12 @@ function updateReadouts() {
   document.getElementById('delta').textContent = delta.toFixed(3) + ' s⁻¹';
   document.getElementById('phi').textContent = (phi*180/Math.PI).toFixed(2) + ' °';
   
-  let regime = 'Subamortiguado';
-  let color = '#00b894';
-  if (Math.abs(delta - OMEGA0) < 0.12) { regime = 'Crítico'; color = '#fdcb6e'; }
+  let regime = 'Sin amortiguamiento';
+  let color = '#74b9ff';
+  if (delta > 0.08 && delta < OMEGA0 * 0.95) { regime = 'Subamortiguado'; color = '#00b894'; }
+  else if (Math.abs(delta - OMEGA0) < 0.15) { regime = 'Crítico'; color = '#fdcb6e'; }
   else if (delta > OMEGA0) { regime = 'Sobreamortiguado'; color = '#e17055'; }
+  
   const el = document.getElementById('regime');
   el.textContent = regime;
   el.style.color = color;
@@ -249,13 +305,13 @@ function integrate(dt) {
 
   historyT.push(simT);
   historyPhi.push(phi * 180 / Math.PI);
-  while (historyT.length > 0 && simT - historyT[0] > 18) {
+  while (historyT.length > 0 && simT - historyT[0] > 20) {
     historyT.shift(); historyPhi.shift();
   }
 }
 
 function draw() {
-  const { rpm, wa } = getControls();
+  const { rpm } = getControls();
   const W = canvasScene.width, H = canvasScene.height;
   ctx.fillStyle = '#f8f9fa';
   ctx.fillRect(0, 0, W, H);
@@ -264,7 +320,7 @@ function draw() {
   const cx = W * 0.37, cy = H * 0.50;
   const R = 2.55 * scale;
 
-  // Base y soporte
+  // Base
   ctx.fillStyle = '#d0d0d0';
   ctx.fillRect(cx - 3.3*scale, cy + 2.7*scale, 5.4*scale, 0.42*scale);
   ctx.strokeStyle = '#333'; ctx.lineWidth = 5;
@@ -363,7 +419,7 @@ function draw() {
   const status = running ? '▶ CORRIENDO' : '⏸ PAUSA';
   ctx.fillText(`${status}  |  RPM = ${rpm.toFixed(1)}  |  φ = ${(phi*180/Math.PI).toFixed(1)}°`, 16, 26);
 
-  // ===== Gráfico temporal =====
+  // Gráfico temporal
   const GW = canvasGraph.width, GH = canvasGraph.height;
   ctxG.fillStyle = '#ffffff';
   ctxG.fillRect(0, 0, GW, GH);
@@ -383,7 +439,6 @@ function draw() {
     }
     ctxG.stroke();
 
-    // línea cero
     ctxG.strokeStyle = '#aaa';
     ctxG.beginPath();
     const y0 = GH-35 - ((0-(minP-0.18*span))/(span*1.35))*(GH-55);
@@ -393,96 +448,163 @@ function draw() {
 
   ctxG.fillStyle = '#333';
   ctxG.font = '13px sans-serif';
-  ctxG.fillText('φ [°] vs tiempo (t)', 50, 20);
+  ctxG.fillText('φ [°] vs tiempo', 50, 20);
 }
 
-// ===== Curva de resonancia (estilo Fig. 10) =====
+// ---------- Resonancia Interactiva ----------
 function showResonance() {
   const modal = document.getElementById('resModal');
   modal.style.display = 'flex';
+
+  const { Ib, f0 } = getControls();
+  document.getElementById('resIb').value = Ib;
+  document.getElementById('resF0').value = f0;
+  document.getElementById('resIbVal').textContent = Ib.toFixed(2) + ' A';
+  document.getElementById('resF0Val').textContent = f0.toFixed(1);
+
+  document.getElementById('resIb').oninput = function() {
+    document.getElementById('resIbVal').textContent = (+this.value).toFixed(2) + ' A';
+    drawResonance();
+  };
+  document.getElementById('resF0').oninput = function() {
+    document.getElementById('resF0Val').textContent = (+this.value).toFixed(1);
+    drawResonance();
+  };
+
+  drawResonance();
+}
+
+function drawResonance() {
   const canvas = document.getElementById('resCanvas');
   const ctx = canvas.getContext('2d');
-  const { Ib, f0, wa } = getControls();
+  
+  const Ib = +document.getElementById('resIb').value;
+  const f0 = +document.getElementById('resF0').value;
   const delta = dampingFromCurrent(Ib);
+  const { wa } = getControls();
 
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Ejes
-  const left = 70, right = canvas.width - 40;
-  const top = 40, bottom = canvas.height - 55;
-  const w = right - left, h = bottom - top;
+  const left = 75, right = canvas.width - 45;
+  const top = 50, bottom = canvas.height - 60;
+  const w = right - left;
+  const h = bottom - top;
 
-  // Rango similar a la Fig. 10 de la guía
-  const waMin = 1.0, waMax = 6.0;
-  const ampMax = 120;
+  const waMin = 1.0;
+  const waMax = 6.0;
+
+  // Calcular máximo real para escalar el eje Y
+  let maxAmpDeg = 10;
+  for (let i = 0; i <= 400; i++) {
+    const wa_ = waMin + (i/400)*(waMax - waMin);
+    const amp = Math.abs(f0) / Math.sqrt(
+      Math.pow(OMEGA0*OMEGA0 - wa_*wa_, 2) + Math.pow(2*delta*wa_, 2)
+    );
+    const ampDeg = amp * 180 / Math.PI;
+    if (ampDeg > maxAmpDeg) maxAmpDeg = ampDeg;
+  }
+  maxAmpDeg *= 1.12; // margen superior
 
   // Cuadrícula
-  ctx.strokeStyle = '#ddd';
+  ctx.strokeStyle = '#e5e5e5';
   ctx.lineWidth = 1;
-  for (let i = 0; i <= 10; i++) {
-    const x = left + (i/10)*w;
+  for (let i = 0; i <= 12; i++) {
+    const x = left + (i/12)*w;
     ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, bottom); ctx.stroke();
+  }
+  for (let i = 0; i <= 10; i++) {
     const y = top + (i/10)*h;
     ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(right, y); ctx.stroke();
   }
 
-  // Curva teórica
+  // Ejes
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(left, top);
+  ctx.lineTo(left, bottom);
+  ctx.lineTo(right, bottom);
+  ctx.stroke();
+
+  // Curva
   ctx.beginPath();
   ctx.strokeStyle = '#1565c0';
-  ctx.lineWidth = 2.5;
-  for (let i = 0; i <= 300; i++) {
-    const wa_ = waMin + (i/300)*(waMax - waMin);
-    const amp = Math.abs(f0) / Math.sqrt(Math.pow(OMEGA0*OMEGA0 - wa_*wa_, 2) + Math.pow(2*delta*wa_, 2));
-    const ampDeg = amp * 180 / Math.PI;          // convertir a grados
+  ctx.lineWidth = 2.8;
+  for (let i = 0; i <= 400; i++) {
+    const wa_ = waMin + (i/400)*(waMax - waMin);
+    const amp = Math.abs(f0) / Math.sqrt(
+      Math.pow(OMEGA0*OMEGA0 - wa_*wa_, 2) + Math.pow(2*delta*wa_, 2)
+    );
+    const ampDeg = amp * 180 / Math.PI;
     const x = left + ((wa_ - waMin)/(waMax - waMin)) * w;
-    const y = bottom - (Math.min(ampDeg, ampMax) / ampMax) * h;
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    const y = bottom - (ampDeg / maxAmpDeg) * h;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
   }
   ctx.stroke();
 
-  // Puntos tipo Fig. 10
+  // Puntos
   ctx.fillStyle = '#1565c0';
-  for (let i = 0; i <= 20; i++) {
-    const wa_ = waMin + (i/20)*(waMax - waMin);
-    const amp = Math.abs(f0) / Math.sqrt(Math.pow(OMEGA0*OMEGA0 - wa_*wa_, 2) + Math.pow(2*delta*wa_, 2));
+  for (let i = 0; i <= 24; i++) {
+    const wa_ = waMin + (i/24)*(waMax - waMin);
+    const amp = Math.abs(f0) / Math.sqrt(
+      Math.pow(OMEGA0*OMEGA0 - wa_*wa_, 2) + Math.pow(2*delta*wa_, 2)
+    );
     const ampDeg = amp * 180 / Math.PI;
     const x = left + ((wa_ - waMin)/(waMax - waMin)) * w;
-    const y = bottom - (Math.min(ampDeg, ampMax) / ampMax) * h;
+    const y = bottom - (ampDeg / maxAmpDeg) * h;
     ctx.beginPath();
     ctx.arc(x, y, 4.5, 0, Math.PI*2);
     ctx.fill();
   }
 
-  // Línea de ω₀
+  // Línea ω₀
   const x0 = left + ((OMEGA0 - waMin)/(waMax - waMin)) * w;
   ctx.strokeStyle = '#888';
-  ctx.setLineDash([6, 4]);
-  ctx.beginPath(); ctx.moveTo(x0, top); ctx.lineTo(x0, bottom); ctx.stroke();
+  ctx.setLineDash([7, 4]);
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x0, top);
+  ctx.lineTo(x0, bottom);
+  ctx.stroke();
   ctx.setLineDash([]);
 
-  // ωa actual
+  // Línea ωa actual
   if (wa >= waMin && wa <= waMax) {
     const xa = left + ((wa - waMin)/(waMax - waMin)) * w;
     ctx.strokeStyle = '#e74c3c';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(xa, top); ctx.lineTo(xa, bottom); ctx.stroke();
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(xa, top);
+    ctx.lineTo(xa, bottom);
+    ctx.stroke();
   }
 
   // Etiquetas
   ctx.fillStyle = '#111';
   ctx.font = '13px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('wa [1/s]', (left+right)/2, canvas.height - 15);
+  ctx.fillText('wa  [1/s]', (left + right)/2, canvas.height - 18);
+
   ctx.save();
-  ctx.translate(22, (top+bottom)/2);
+  ctx.translate(22, (top + bottom)/2);
   ctx.rotate(-Math.PI/2);
-  ctx.fillText('Phi [°]', 0, 0);
+  ctx.fillText('Phi  [°]', 0, 0);
   ctx.restore();
 
+  // Números eje X
+  ctx.font = '11px sans-serif';
+  for (let i = 0; i <= 10; i++) {
+    const waVal = waMin + (i/10)*(waMax - waMin);
+    const x = left + (i/10)*w;
+    ctx.fillText(waVal.toFixed(1), x, bottom + 18);
+  }
+
+  // Título
   ctx.font = 'bold 15px sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText(`Curva de resonancia  |  I_B = ${Ib.toFixed(2)} A  |  δ = ${delta.toFixed(3)} s⁻¹`, left, 28);
+  ctx.fillText(`I_B = ${Ib.toFixed(2)} A   |   δ = ${delta.toFixed(3)} s⁻¹   |   Máximo ≈ ${maxAmpDeg.toFixed(0)}°`, left, 28);
 }
 
 function loop(t) {
@@ -499,11 +621,15 @@ function start() { running = true; lastTime = null; }
 function pause() { running = false; }
 function reset() {
   running = false;
-  phi = 10 * Math.PI/180;
+  phi = 5 * Math.PI / 180;
   omega = 0;
   motorPhase = 0;
   simT = 0;
   historyT = []; historyPhi = [];
+  rpmSlider.value = 0;
+  currentSlider.value = 0;
+  document.getElementById('rpmVal').textContent = '0.0 RPM';
+  document.getElementById('currentVal').textContent = '0.00 A';
   updateReadouts();
 }
 
