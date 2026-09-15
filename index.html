@@ -122,7 +122,7 @@
 
     <div class="control-group">
       <label>F₀ (amplitud de excitación)</label>
-      <input type="number" id="f0" value="0" step="0.1" min="0" style="width:100%; padding:6px; border-radius:4px; border:none;">
+      <input type="number" id="f0" value="2.0" step="0.1" min="0" style="width:100%; padding:6px; border-radius:4px; border:none;">
     </div>
 
     <div class="control-group">
@@ -150,7 +150,7 @@
     <div class="tip">
       <strong>Cómo encontrar la resonancia:</strong><br>
       1. Pon I_B = 0.23 A o 0.45 A<br>
-      2. Pon un valor de F₀ (ej. 2.0 – 2.5)<br>
+      2. Deja F₀ ≈ 2.0<br>
       3. Sube el RPM poco a poco → el máximo está cerca de <strong>30.5 RPM</strong>
     </div>
   </div>
@@ -180,8 +180,8 @@
       </div>
       <div>
         <label style="font-size:0.88rem; color:#555;">F₀</label><br>
-        <input type="range" id="resF0" min="0" max="5" step="0.1" value="2.2" style="width:180px;">
-        <span id="resF0Val" style="font-family:monospace;">2.2</span>
+        <input type="range" id="resF0" min="0" max="5" step="0.1" value="2.0" style="width:180px;">
+        <span id="resF0Val" style="font-family:monospace;">2.0</span>
       </div>
       <button onclick="drawResonance()" style="padding:8px 16px; background:#6c5ce7; color:white; border:none; border-radius:6px; cursor:pointer;">
         Actualizar
@@ -200,7 +200,6 @@ const OMEGA0 = 3.20;               // Valor exacto de la guía PHYWE
 const PHI_MAX = 150 * Math.PI/180; // ±150°
 
 function dampingFromCurrent(Ib) {
-  // Valores calibrados según la guía
   const points = [
     [0.00, 0.02],
     [0.23, 0.18],
@@ -289,7 +288,6 @@ function integrate(dt) {
   for (let i = 0; i < steps; i++) {
     const phase = motorPhase;
 
-    // Topes elásticos en ±150°
     let extra = 0;
     if (Math.abs(phi) > PHI_MAX) {
       const excess = Math.abs(phi) - PHI_MAX;
@@ -315,7 +313,6 @@ function integrate(dt) {
   }
   motorPhase %= 2*Math.PI;
 
-  // Seguridad
   if (phi >  PHI_MAX*1.08) { phi =  PHI_MAX*1.08; omega *= 0.3; }
   if (phi < -PHI_MAX*1.08) { phi = -PHI_MAX*1.08; omega *= 0.3; }
 
@@ -504,9 +501,9 @@ function showResonance() {
   document.getElementById('resModal').style.display = 'flex';
   const { Ib, f0 } = getControls();
   document.getElementById('resIb').value = Ib || 0.23;
-  document.getElementById('resF0').value = f0 || 2.2;
+  document.getElementById('resF0').value = f0 || 2.0;
   document.getElementById('resIbVal').textContent = (Ib||0.23).toFixed(2) + ' A';
-  document.getElementById('resF0Val').textContent = (f0||2.2).toFixed(1);
+  document.getElementById('resF0Val').textContent = (f0||2.0).toFixed(1);
 
   document.getElementById('resIb').oninput = function() {
     document.getElementById('resIbVal').textContent = (+this.value).toFixed(2) + ' A';
@@ -535,7 +532,6 @@ function drawResonance() {
   const w = right - left, h = bottom - top;
   const waMin = 1.0, waMax = 6.0;
 
-  // Máximo real para escalar
   let maxAmpDeg = 15;
   for (let i = 0; i <= 400; i++) {
     const wa_ = waMin + (i/400)*(waMax-waMin);
@@ -545,126 +541,4 @@ function drawResonance() {
   }
   maxAmpDeg *= 1.15;
 
-  // Cuadrícula
-  ctx.strokeStyle = '#e8e8e8';
-  ctx.lineWidth = 1;
-  for (let i=0; i<=12; i++) {
-    const x = left + (i/12)*w;
-    ctx.beginPath(); ctx.moveTo(x,top); ctx.lineTo(x,bottom); ctx.stroke();
-  }
-  for (let i=0; i<=10; i++) {
-    const y = top + (i/10)*h;
-    ctx.beginPath(); ctx.moveTo(left,y); ctx.lineTo(right,y); ctx.stroke();
-  }
-
-  // Curva
-  ctx.beginPath();
-  ctx.strokeStyle = '#1565c0';
-  ctx.lineWidth = 2.7;
-  for (let i=0; i<=400; i++) {
-    const wa_ = waMin + (i/400)*(waMax-waMin);
-    const amp = Math.abs(f0) / Math.sqrt(Math.pow(OMEGA0*OMEGA0 - wa_*wa_,2) + Math.pow(2*delta*wa_,2));
-    const ampDeg = amp * 180 / Math.PI;
-    const x = left + ((wa_-waMin)/(waMax-waMin))*w;
-    const y = bottom - (ampDeg / maxAmpDeg)*h;
-    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-  }
-  ctx.stroke();
-
-  // Puntos
-  ctx.fillStyle = '#1565c0';
-  for (let i=0; i<=22; i++) {
-    const wa_ = waMin + (i/22)*(waMax-waMin);
-    const amp = Math.abs(f0) / Math.sqrt(Math.pow(OMEGA0*OMEGA0 - wa_*wa_,2) + Math.pow(2*delta*wa_,2));
-    const ampDeg = amp * 180 / Math.PI;
-    const x = left + ((wa_-waMin)/(waMax-waMin))*w;
-    const y = bottom - (ampDeg / maxAmpDeg)*h;
-    ctx.beginPath(); ctx.arc(x,y,4.3,0,Math.PI*2); ctx.fill();
-  }
-
-  // ω0
-  const x0 = left + ((OMEGA0-waMin)/(waMax-waMin))*w;
-  ctx.strokeStyle = '#666';
-  ctx.setLineDash([6,4]);
-  ctx.beginPath(); ctx.moveTo(x0,top); ctx.lineTo(x0,bottom); ctx.stroke();
-  ctx.setLineDash([]);
-
-  // ωa actual
-  if (wa >= waMin && wa <= waMax) {
-    const xa = left + ((wa-waMin)/(waMax-waMin))*w;
-    ctx.strokeStyle = '#e74c3c';
-    ctx.lineWidth = 2.2;
-    ctx.beginPath(); ctx.moveTo(xa,top); ctx.lineTo(xa,bottom); ctx.stroke();
-  }
-
-  // Etiquetas
-  ctx.fillStyle = '#111';
-  ctx.font = '13px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('wa [1/s]', (left+right)/2, canvas.height-16);
-  ctx.save();
-  ctx.translate(20,(top+bottom)/2);
-  ctx.rotate(-Math.PI/2);
-  ctx.fillText('Phi [°]',0,0);
-  ctx.restore();
-
-  ctx.font = 'bold 14px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.fillText(`I_B = ${Ib.toFixed(2)} A  |  δ = ${delta.toFixed(3)}  |  Máx ≈ ${maxAmpDeg.toFixed(0)}°`, left, 28);
-}
-
-function loop(t) {
-  if (!lastTime) lastTime = t;
-  const dt = Math.min(0.04, (t - lastTime)/1000);
-  lastTime = t;
-  if (running) integrate(dt);
-  updateReadouts();
-  draw();
-  requestAnimationFrame(loop);
-}
-
-function start() {
-  freeMode = false;
-  running = true;
-  lastTime = null;
-}
-function pause() { running = false; }
-
-function reset() {
-  running = false;
-  freeMode = false;
-  phi = 0;
-  omega = 0;
-  motorPhase = 0;
-  simT = 0;
-  historyT = []; historyPhi = [];
-  rpmSlider.value = 0;
-  currentSlider.value = 0;
-  f0Input.value = 0;
-  phi0Input.value = 0;
-  document.getElementById('rpmVal').textContent = '0.0 RPM';
-  document.getElementById('currentVal').textContent = '0.00 A';
-  updateReadouts();
-}
-
-function freeOscillation() {
-  freeMode = true;
-  rpmSlider.value = 0;
-  document.getElementById('rpmVal').textContent = '0.0 RPM';
-  
-  const ang = +phi0Input.value || 60;
-  phi = ang * Math.PI / 180;
-  omega = 0;
-  motorPhase = 0;
-  simT = 0;
-  historyT = []; historyPhi = [];
-  
-  running = true;
-  lastTime = null;
-}
-
-updateReadouts();
-requestAnimationFrame(loop);
-</script>
-</body>
-</html>
+  ctx.strokeStyle =
