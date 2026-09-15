@@ -65,12 +65,12 @@
 
 <header>
   <h1>Péndulo de Pohl — Oscilaciones libres y forzadas</h1>
-  <div class="subtitle">ω₀ = 3.20 rad/s · T₀ = 1.962 s · escala ±20 divisiones (1 div = 7.5°)</div>
+  <div class="subtitle">ω₀ = 3.20 rad/s · T₀ = 1.962 s · Física estable</div>
 </header>
 
 <div class="main">
   <div class="sidebar">
-    <div class="divider-lbl">MOTOR EXCITADOR (forzada)</div>
+    <div class="divider-lbl">MOTOR EXCITADOR</div>
     <div class="group">
       <label>Velocidad del motor (10 – 70 RPM)</label>
       <input type="range" id="rpm" min="10" max="70" step="0.2" value="10">
@@ -114,7 +114,7 @@
 
     <div class="tip">
       <b>Resonancia:</b> I<sub>B</sub> ≈ 0.23–0.45 A · F₀ = 2.0<br>
-      Sube el motor desde 10 RPM → el máximo está cerca de <b>30.5 RPM</b>.
+      El máximo está cerca de <b>30.5 RPM</b>.
     </div>
   </div>
 
@@ -124,11 +124,10 @@
   </div>
 </div>
 
-<!-- Modal Resonancia con Tabla -->
 <div id="resModal">
   <div class="modal-card">
     <div class="modal-head">
-      <h2 style="font-size:1.2rem;font-weight:600">Curva de Resonancia + Tabla de valores</h2>
+      <h2 style="font-size:1.2rem;font-weight:600">Curva de Resonancia + Tabla</h2>
       <button class="btn-reset" style="padding:7px 14px" onclick="document.getElementById('resModal').style.display='none'">Cerrar</button>
     </div>
 
@@ -152,10 +151,9 @@
 
     <div class="res-content">
       <canvas id="resCanvas" width="620" height="400"></canvas>
-      
       <div>
         <h3 style="margin-bottom:8px;font-size:0.95rem">Tabla de valores</h3>
-        <table class="res-table" id="resTable">
+        <table class="res-table">
           <thead>
             <tr>
               <th>ωₐ (rad/s)</th>
@@ -174,362 +172,280 @@
 <script>
 const OMEGA0 = 3.20;
 const DEG = 180/Math.PI;
-const DIV = 7.5;
-const PHI_MAX = 20 * DIV / DEG;
+const PHI_MAX = 150 * Math.PI / 180;
 
-function dampingFromCurrent(Ib){
-  const pts=[[0,0.03],[0.23,0.18],[0.45,0.33],[0.80,0.67],[2.0,3.20],[2.3,3.80],[2.5,4.40]];
-  for(let i=0;i<pts.length-1;i++){
-    if(Ib>=pts[i][0]&&Ib<=pts[i+1][0]){
-      const t=(Ib-pts[i][0])/(pts[i+1][0]-pts[i][0]);
-      return pts[i][1]+t*(pts[i+1][1]-pts[i][1]);
+function dampingFromCurrent(Ib) {
+  const points = [
+    [0.00, 0.02],
+    [0.23, 0.18],
+    [0.45, 0.33],
+    [0.80, 0.67],
+    [2.00, 3.20],
+    [2.50, 4.50]
+  ];
+  for (let i = 0; i < points.length-1; i++) {
+    if (Ib >= points[i][0] && Ib <= points[i+1][0]) {
+      const t = (Ib - points[i][0]) / (points[i+1][0] - points[i][0]);
+      return points[i][1] + t * (points[i+1][1] - points[i][1]);
     }
   }
-  return pts[pts.length-1][1];
+  return points[points.length-1][1];
 }
 
-let running=false, freeMode=false;
-let phi=0, omega=0, motorPhase=0, simT=0, thetaL=0;
-let histT=[], histPhi=[], histDrive=[];
-let lastTime=null;
+let running = false, freeMode = false;
+let phi = 0, omega = 0, motorPhase = 0, simT = 0;
+let historyT = [], historyPhi = [];
+let lastTime = null;
 
-const $=id=>document.getElementById(id);
-const rpmSlider=$('rpm'), currentSlider=$('current'), f0Input=$('f0'), phi0Input=$('phi0');
-const cScene=$('scene'), cGraph=$('graph');
-const ctx=cScene.getContext('2d'), ctxG=cGraph.getContext('2d');
+const $ = id => document.getElementById(id);
+const rpmSlider = $('rpm'), currentSlider = $('current'), f0Input = $('f0'), phi0Input = $('phi0');
+const cScene = $('scene'), cGraph = $('graph');
+const ctx = cScene.getContext('2d'), ctxG = cGraph.getContext('2d');
 
-function resize(){
-  const dpr=Math.min(window.devicePixelRatio||1,2);
-  [cScene,cGraph].forEach(cv=>{
-    cv.width=cv.clientWidth*dpr; cv.height=cv.clientHeight*dpr;
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  [cScene, cGraph].forEach(cv => {
+    cv.width = cv.clientWidth * dpr;
+    cv.height = cv.clientHeight * dpr;
   });
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  ctxG.setTransform(dpr,0,0,dpr,0,0);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctxG.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
-window.addEventListener('resize',resize);
+window.addEventListener('resize', resize);
 
-rpmSlider.oninput=()=>{$('rpmVal').textContent=(+rpmSlider.value).toFixed(1)+' RPM';updateReadouts();};
-currentSlider.oninput=()=>{$('currentVal').textContent=(+currentSlider.value).toFixed(2)+' A';updateReadouts();};
+rpmSlider.oninput = () => {
+  $('rpmVal').textContent = (+rpmSlider.value).toFixed(1) + ' RPM';
+  updateReadouts();
+};
+currentSlider.oninput = () => {
+  $('currentVal').textContent = (+currentSlider.value).toFixed(2) + ' A';
+  updateReadouts();
+};
 
-function getControls(){
-  const rpm=+rpmSlider.value;
-  const Ib=+currentSlider.value;
-  const f0=freeMode?0:(+f0Input.value||0);
-  const wa=freeMode?0:2*Math.PI*rpm/60;
-  const delta=dampingFromCurrent(Ib);
-  return {rpm,Ib,f0,wa,delta};
+function getControls() {
+  const rpm = +rpmSlider.value;
+  const Ib = +currentSlider.value;
+  const f0 = freeMode ? 0 : (+f0Input.value || 0);
+  const wa = freeMode ? 0 : 2 * Math.PI * rpm / 60;
+  const delta = dampingFromCurrent(Ib);
+  return { rpm, Ib, f0, wa, delta };
 }
 
-function updateReadouts(){
-  const {wa,delta}=getControls();
-  $('wa').textContent=wa.toFixed(3)+' rad/s';
-  $('freq').textContent=(wa/(2*Math.PI)).toFixed(3)+' Hz';
-  $('delta').textContent=delta.toFixed(3)+' s⁻¹';
-  $('phi').textContent=(phi*DEG).toFixed(2)+' °';
+function updateReadouts() {
+  const { wa, delta } = getControls();
+  $('wa').textContent = wa.toFixed(3) + ' rad/s';
+  $('freq').textContent = (wa / (2 * Math.PI)).toFixed(3) + ' Hz';
+  $('delta').textContent = delta.toFixed(3) + ' s⁻¹';
+  $('phi').textContent = (phi * DEG).toFixed(2) + ' °';
 
-  let regime='En reposo', color='var(--dim)';
-  if(running){
-    if(freeMode){
-      if(delta<0.05){regime='Libre — sin amortiguar';color='var(--accent2)';}
-      else if(Math.abs(delta-OMEGA0)<0.20){regime='Amortiguamiento crítico';color='var(--warn)';}
-      else if(delta>OMEGA0){regime='Reptante';color='var(--accent)';}
-      else{regime='Libre — subamortiguado';color='var(--ok)';}
-    }else{ regime='Forzada'; color='var(--ok)'; }
+  let regime = 'En reposo', color = 'var(--dim)';
+  if (running) {
+    if (freeMode) {
+      if (delta < 0.05) { regime = 'Libre — sin amortiguar'; color = 'var(--accent2)'; }
+      else if (Math.abs(delta - OMEGA0) < 0.2) { regime = 'Crítico'; color = 'var(--warn)'; }
+      else if (delta > OMEGA0) { regime = 'Reptante'; color = 'var(--accent)'; }
+      else { regime = 'Libre — subamortiguado'; color = 'var(--ok)'; }
+    } else {
+      regime = 'Forzada'; color = 'var(--ok)';
+    }
   }
-  const el=$('regime'); el.textContent=regime; el.style.color=color;
+  const el = $('regime');
+  el.textContent = regime;
+  el.style.color = color;
 }
 
-function integrate(dt){
-  const {f0,wa,delta}=getControls();
-  const steps=Math.max(1,Math.ceil(dt/0.0035));
-  const h=dt/steps;
+// ========== FÍSICA ESTABLE (del código antiguo) ==========
+function integrate(dt) {
+  const { f0, wa, delta } = getControls();
+  const steps = Math.max(1, Math.ceil(dt / 0.004));
+  const h = dt / steps;
 
-  for(let i=0;i<steps;i++){
-    let wall=0;
-    if(Math.abs(phi)>PHI_MAX){
-      const excess=Math.abs(phi)-PHI_MAX;
-      wall=-Math.sign(phi)*(18*excess + 60*excess*excess);
+  for (let i = 0; i < steps; i++) {
+    const phase = motorPhase;
+
+    function deriv(p, o, ph) {
+      return [o, f0 * Math.cos(ph) - 2 * delta * o - OMEGA0 * OMEGA0 * p];
     }
 
-    const acc=(p,o,ph)=> f0*Math.cos(ph) - OMEGA0*OMEGA0*p - 2*delta*o + wall;
+    let y = [phi, omega];
+    const k1 = deriv(y[0], y[1], phase);
+    const k2 = deriv(y[0] + 0.5 * h * k1[0], y[1] + 0.5 * h * k1[1], phase + 0.5 * wa * h);
+    const k3 = deriv(y[0] + 0.5 * h * k2[0], y[1] + 0.5 * h * k2[1], phase + 0.5 * wa * h);
+    const k4 = deriv(y[0] + h * k3[0], y[1] + h * k3[1], phase + wa * h);
 
-    const ph0=motorPhase;
-    const k1v=omega,               k1a=acc(phi,omega,ph0);
-    const k2v=omega+0.5*h*k1a,     k2a=acc(phi+0.5*h*k1v, omega+0.5*h*k1a, ph0+0.5*wa*h);
-    const k3v=omega+0.5*h*k2a,     k3a=acc(phi+0.5*h*k2v, omega+0.5*h*k2a, ph0+0.5*wa*h);
-    const k4v=omega+h*k3a,         k4a=acc(phi+h*k3v,     omega+h*k3a,     ph0+wa*h);
-
-    phi   += (h/6)*(k1v+2*k2v+2*k3v+k4v);
-    omega += (h/6)*(k1a+2*k2a+2*k3a+k4a);
-    motorPhase += wa*h;
+    phi   += (h / 6) * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]);
+    omega += (h / 6) * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]);
+    motorPhase += wa * h;
     simT += h;
   }
-  motorPhase = ((motorPhase % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+  motorPhase %= (2 * Math.PI);
 
-  if(phi> PHI_MAX*1.03){phi= PHI_MAX*1.03; if(omega>0) omega*=0.55;}
-  if(phi<-PHI_MAX*1.03){phi=-PHI_MAX*1.03; if(omega<0) omega*=0.55;}
+  // Límite suave de amplitud (solo seguridad, sin topes agresivos)
+  if (phi >  PHI_MAX) { phi =  PHI_MAX; omega *= 0.7; }
+  if (phi < -PHI_MAX) { phi = -PHI_MAX; omega *= 0.7; }
 
-  const {f0:F0}=getControls();
-  const drive=freeMode?0:F0*Math.cos(motorPhase);
-
-  histT.push(simT); histPhi.push(phi*DEG); histDrive.push(drive);
-  while(histT.length>0 && simT-histT[0]>18){histT.shift();histPhi.shift();histDrive.shift();}
+  historyT.push(simT);
+  historyPhi.push(phi * DEG);
+  while (historyT.length > 0 && simT - historyT[0] > 18) {
+    historyT.shift();
+    historyPhi.shift();
+  }
 }
 
-// ---------- Dibujo del aparato (se mantiene) ----------
-function draw(){
-  const W=cScene.clientWidth, H=cScene.clientHeight;
-  const {rpm,Ib}=getControls();
+// ========== Dibujo simplificado pero limpio ==========
+function draw() {
+  const W = cScene.clientWidth, H = cScene.clientHeight;
+  const { rpm } = getControls();
 
-  const bg=ctx.createLinearGradient(0,0,0,H);
-  bg.addColorStop(0,'#141821'); bg.addColorStop(1,'#0a0c11');
-  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = '#0c0e13';
+  ctx.fillRect(0, 0, W, H);
 
-  const cx=W*0.40, cy=H*0.52;
-  const R=Math.min(W*0.40,H*0.44);
-  const Rw=R*0.80, Rin=Rw*0.80, hubR=Rw*0.14;
+  const scale = Math.min(W, H) / 16;
+  const cx = W * 0.38, cy = H * 0.50;
+  const R = 2.6 * scale;
 
-  ctx.fillStyle='#8a6236';
-  ctx.fillRect(0,cy+R*1.02,W,H-(cy+R*1.02));
-  ctx.fillStyle='#c9cdd4';
-  ctx.fillRect(cx-R*0.055,cy,R*0.11,R*1.03);
+  // Base
+  ctx.fillStyle = '#2a2f38';
+  ctx.fillRect(cx - 3.2 * scale, cy + 2.8 * scale, 5.2 * scale, 0.4 * scale);
 
-  drawBrake(cx, cy+Rw, R*0.11, Ib);
-  drawScale(cx,cy,R);
-  drawWheel(cx,cy,Rw,Rin,hubR,phi);
-  drawSpiral(cx,cy,hubR,Rin,phi,thetaL);
-  drawDrive(W,H,cx,cy,R,Rin);
+  // Disco
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, Math.PI * 2);
+  ctx.fillStyle = '#c17817';
+  ctx.fill();
+  ctx.strokeStyle = '#8B4513';
+  ctx.lineWidth = 3;
+  ctx.stroke();
 
-  ctx.fillStyle='#e7ecf3'; ctx.font='600 13px Segoe UI'; ctx.textAlign='left';
-  const st=running?(freeMode?'● LIBRE':'● FORZADA'):'❚❚ PAUSA';
-  ctx.fillText(`${st}   φ = ${(phi*DEG).toFixed(1)}°   RPM = ${rpm.toFixed(1)}`, 14, 22);
-
-  drawGraph();
-}
-
-function drawScale(cx,cy,R){
-  ctx.beginPath(); ctx.arc(cx,cy,R*1.09,0,Math.PI*2);
-  ctx.arc(cx,cy,R*0.90,0,Math.PI*2,true);
-  ctx.fillStyle='#20242c'; ctx.fill();
-  ctx.strokeStyle='#3a4150'; ctx.lineWidth=1.5;
-  ctx.beginPath(); ctx.arc(cx,cy,R*1.09,0,Math.PI*2); ctx.stroke();
-  ctx.beginPath(); ctx.arc(cx,cy,R*0.90,0,Math.PI*2); ctx.stroke();
-
-  for(let d=-20; d<=20; d++){
-    const a=d*DIV/DEG;
-    const even=(d%2===0);
-    const r1=R*0.90, r2=even?R*1.06:R*1.00;
+  // Escala
+  ctx.strokeStyle = '#aaa';
+  ctx.lineWidth = 1.2;
+  for (let ang = -150; ang <= 150; ang += 10) {
+    const a = ang * Math.PI / 180;
     ctx.beginPath();
-    ctx.moveTo(cx+r1*Math.sin(a), cy-r1*Math.cos(a));
-    ctx.lineTo(cx+r2*Math.sin(a), cy-r2*Math.cos(a));
-    ctx.strokeStyle=(d===0)?'#e0533d':'#c7ced8';
-    ctx.lineWidth=(d===0)?2.5:(even?1.6:0.9);
+    ctx.moveTo(cx + R * 1.02 * Math.sin(a), cy - R * 1.02 * Math.cos(a));
+    ctx.lineTo(cx + R * 1.12 * Math.sin(a), cy - R * 1.12 * Math.cos(a));
     ctx.stroke();
   }
-  ctx.fillStyle='#aeb7c4'; ctx.font='11px Segoe UI';
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  for(let d=-20; d<=20; d+=4){
-    if(d===0) continue;
-    const a=d*DIV/DEG;
-    ctx.fillText(Math.abs(d), cx+R*0.965*Math.sin(a), cy-R*0.965*Math.cos(a));
-  }
-  ctx.fillStyle='#e0533d'; ctx.font='600 11px Segoe UI';
-  ctx.fillText('0', cx, cy-R*0.985);
-}
 
-function drawWheel(cx,cy,Rw,Rin,hubR,ang){
-  ctx.save(); ctx.translate(cx,cy); ctx.rotate(ang);
-  const g=ctx.createRadialGradient(0,0,Rin,0,0,Rw);
-  g.addColorStop(0,'#7a4e22'); g.addColorStop(.5,'#c88a3a');
-  g.addColorStop(.75,'#e2ab5f'); g.addColorStop(1,'#8a5a28');
-  ctx.beginPath(); ctx.arc(0,0,Rw,0,Math.PI*2);
-  ctx.arc(0,0,Rin,0,Math.PI*2,true); ctx.fillStyle=g; ctx.fill();
-  ctx.lineWidth=2; ctx.strokeStyle='#5a3a18';
-  ctx.beginPath(); ctx.arc(0,0,Rw,0,Math.PI*2); ctx.stroke();
-  ctx.beginPath(); ctx.arc(0,0,Rin,0,Math.PI*2); ctx.stroke();
-
-  for(let k=0;k<4;k++){
-    ctx.save(); ctx.rotate(k*Math.PI/2);
-    ctx.fillStyle='#b07a40';
-    ctx.beginPath();
-    ctx.moveTo(-Rin*0.07,-hubR); ctx.lineTo(Rin*0.07,-hubR);
-    ctx.lineTo(Rin*0.045,-Rin); ctx.lineTo(-Rin*0.045,-Rin); ctx.closePath(); ctx.fill();
-    ctx.restore();
-  }
-
-  ctx.beginPath(); ctx.arc(0,0,hubR,0,Math.PI*2);
-  ctx.fillStyle='#c0c4cc'; ctx.fill();
-  ctx.strokeStyle='#4a4f57'; ctx.lineWidth=1.5; ctx.stroke();
-
+  // Indicador
+  const a = phi;
   ctx.beginPath();
-  ctx.moveTo(0,-hubR*0.4);
-  ctx.lineTo(-3,-Rw*0.62);
-  ctx.lineTo(0,-Rw*0.90);
-  ctx.lineTo(3,-Rw*0.62);
-  ctx.closePath();
-  ctx.fillStyle='#d0281f'; ctx.fill();
-  ctx.restore();
-}
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + R * 0.92 * Math.sin(a), cy - R * 0.92 * Math.cos(a));
+  ctx.strokeStyle = '#e0533d';
+  ctx.lineWidth = 3.5;
+  ctx.stroke();
 
-function drawSpiral(cx,cy,hubR,Rin,phiIn,thL){
-  const turns=4 + (thL - phiIn)*0.35;
+  // Centro
   ctx.beginPath();
-  for(let i=0;i<=220;i++){
-    const t=i/220;
-    const a=phiIn + t*turns*2*Math.PI - Math.PI/2;
-    const r=hubR*1.05 + t*(Rin*0.90-hubR*1.05);
-    const x=cx+r*Math.cos(a), y=cy+r*Math.sin(a);
-    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-  }
-  ctx.strokeStyle='#b5651d'; ctx.lineWidth=2.2; ctx.stroke();
-}
+  ctx.arc(cx, cy, 0.18 * scale, 0, Math.PI * 2);
+  ctx.fillStyle = '#ddd';
+  ctx.fill();
 
-function drawBrake(px,py,s,Ib){
-  ctx.fillStyle='#2b2f36';
-  ctx.fillRect(px-s*1.6, py-s*0.2, s*3.2, s*2.4);
-  ctx.fillStyle='#8f2d1c';
-  for(let side of [-1,1]){
-    const bx=px+side*s*1.05;
-    ctx.fillRect(bx-s*0.42, py+s*0.05, s*0.84, s*1.7);
-  }
-  if(Ib>0.01){
-    const gl=ctx.createRadialGradient(px,py,1,px,py,s*1.2);
-    gl.addColorStop(0,`rgba(120,180,255,${Math.min(0.5,Ib*0.25)})`);
-    gl.addColorStop(1,'rgba(120,180,255,0)');
-    ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(px,py,s*1.2,0,Math.PI*2); ctx.fill();
-  }
-}
+  // Título
+  ctx.fillStyle = '#e7ecf3';
+  ctx.font = '600 13px Segoe UI';
+  ctx.textAlign = 'left';
+  const st = running ? (freeMode ? '● LIBRE' : '● FORZADA') : '❚❚ PAUSA';
+  ctx.fillText(`${st}   φ = ${(phi * DEG).toFixed(1)}°   RPM = ${rpm.toFixed(1)}`, 14, 22);
 
-function drawDrive(W,H,cx,cy,R,Rin){
-  const {f0}=getControls();
-  const leverAmp=freeMode?0:Math.min(0.28, (f0/2)*0.15);
-  thetaL=leverAmp*Math.cos(motorPhase);
+  // Gráfico limpio
+  const GW = cGraph.clientWidth, GH = cGraph.clientHeight;
+  ctxG.fillStyle = '#0c0e13';
+  ctxG.fillRect(0, 0, GW, GH);
 
-  const leverLen=R*0.72;
-  const xL=cx+leverLen*Math.sin(thetaL);
-  const yL=cy+leverLen*Math.cos(thetaL);
-  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(xL,yL);
-  ctx.strokeStyle='#33507a'; ctx.lineWidth=5; ctx.lineCap='round'; ctx.stroke();
-  ctx.beginPath(); ctx.arc(xL,yL,4,0,Math.PI*2); ctx.fillStyle='#20344f'; ctx.fill();
+  if (historyT.length > 4) {
+    const minT = historyT[0], maxT = historyT[historyT.length - 1];
+    const minP = Math.min(...historyPhi), maxP = Math.max(...historyPhi);
+    const span = Math.max(20, maxP - minP);
 
-  const mx=W*0.86, my=cy+R*0.30, mR=R*0.30;
-  ctx.fillStyle='#d7dbe1';
-  ctx.fillRect(mx-mR*0.55,my-mR*0.85,mR*1.1,mR*1.7);
-  ctx.strokeStyle='#8b929c'; ctx.lineWidth=1.5; ctx.strokeRect(mx-mR*0.55,my-mR*0.85,mR*1.1,mR*1.7);
-  ctx.fillStyle='#4a4f57'; ctx.font='600 10px Segoe UI'; ctx.textAlign='center';
-  ctx.fillText('MOTOR', mx, my-mR*0.95);
-
-  const ecc=mR*0.42;
-  const ex=mx+ecc*Math.cos(motorPhase), ey=my+ecc*Math.sin(motorPhase);
-  ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(xL,yL);
-  ctx.strokeStyle='#5b6b82'; ctx.lineWidth=3; ctx.stroke();
-  ctx.beginPath(); ctx.arc(ex,ey,4,0,Math.PI*2); ctx.fillStyle='#1c1f24'; ctx.fill();
-}
-
-function drawGraph(){
-  const W=cGraph.clientWidth, H=cGraph.clientHeight;
-  ctxG.fillStyle='#0c0e13'; ctxG.fillRect(0,0,W,H);
-  const L=48,B=H-22,T=14,Rr=W-14;
-
-  if(histT.length>4){
-    const t0=histT[0], t1=histT[histT.length-1];
-    const pmax=Math.max(30,...histPhi.map(Math.abs));
-    const min=-pmax*1.1, span=pmax*2.2;
-    const X=t=>L+((t-t0)/(t1-t0+1e-6))*(Rr-L);
-    const yz=v=>B-((v-min)/span)*(B-T);
-
-    ctxG.strokeStyle='#3d7de0'; ctxG.lineWidth=1.8; ctxG.beginPath();
-    for(let i=0;i<histT.length;i++){
-      const y=yz(histPhi[i]);
-      i?ctxG.lineTo(X(histT[i]),y):ctxG.moveTo(X(histT[i]),y);
+    ctxG.strokeStyle = '#3d7de0';
+    ctxG.lineWidth = 1.8;
+    ctxG.beginPath();
+    for (let i = 0; i < historyT.length; i++) {
+      const x = 50 + ((historyT[i] - minT) / (maxT - minT + 0.01)) * (GW - 70);
+      const y = GH - 30 - ((historyPhi[i] - (minP - 0.15 * span)) / (span * 1.3)) * (GH - 45);
+      if (i === 0) ctxG.moveTo(x, y);
+      else ctxG.lineTo(x, y);
     }
     ctxG.stroke();
   }
-  ctxG.fillStyle='#9aa6b6'; ctxG.font='11px Segoe UI';
-  ctxG.fillText('φ [°] vs t [s]', 48, 14);
+  ctxG.fillStyle = '#9aa6b6';
+  ctxG.font = '12px Segoe UI';
+  ctxG.fillText('φ [°] vs tiempo', 50, 16);
 }
 
-// ---------- Resonancia con tabla ----------
-function showResonance(){
-  $('resModal').style.display='flex';
-  const {Ib,f0}=getControls();
-  $('resIb').value=Ib||0.23; $('resF0').value=f0||2.0;
-  $('resIbVal').textContent=(Ib||0.23).toFixed(2)+' A';
-  $('resF0Val').textContent=(f0||2.0).toFixed(1);
-  $('resIb').oninput=function(){$('resIbVal').textContent=(+this.value).toFixed(2)+' A';drawResonance();};
-  $('resF0').oninput=function(){$('resF0Val').textContent=(+this.value).toFixed(1);drawResonance();};
+function showResonance() {
+  $('resModal').style.display = 'flex';
+  const { Ib, f0 } = getControls();
+  $('resIb').value = Ib || 0.23;
+  $('resF0').value = f0 || 2.0;
+  $('resIbVal').textContent = (Ib || 0.23).toFixed(2) + ' A';
+  $('resF0Val').textContent = (f0 || 2.0).toFixed(1);
+  $('resIb').oninput = function () {
+    $('resIbVal').textContent = (+this.value).toFixed(2) + ' A';
+    drawResonance();
+  };
+  $('resF0').oninput = function () {
+    $('resF0Val').textContent = (+this.value).toFixed(1);
+    drawResonance();
+  };
   drawResonance();
 }
 
-function drawResonance(){
-  const cv=$('resCanvas'), c=cv.getContext('2d');
-  const Ib=+$('resIb').value, f0=+$('resF0').value;
-  const delta=dampingFromCurrent(Ib);
+function drawResonance() {
+  const cv = $('resCanvas'), c = cv.getContext('2d');
+  const Ib = +$('resIb').value, f0 = +$('resF0').value;
+  const delta = dampingFromCurrent(Ib);
 
-  c.fillStyle='#0c0e13'; c.fillRect(0,0,cv.width,cv.height);
+  c.fillStyle = '#0c0e13';
+  c.fillRect(0, 0, cv.width, cv.height);
 
-  const L=60, Rr=cv.width-30, T=40, B=cv.height-50;
-  const w=Rr-L, h=B-T;
-  const waMin=1.0, waMax=7.0;
+  const L = 60, Rr = cv.width - 30, T = 40, B = cv.height - 50;
+  const w = Rr - L, h = B - T;
+  const waMin = 1.0, waMax = 7.0;
 
-  const amp = wa_ => Math.abs(f0) / Math.sqrt((OMEGA0*OMEGA0 - wa_*wa_)**2 + (2*delta*wa_)**2) * DEG;
+  const amp = wa_ => Math.abs(f0) / Math.sqrt((OMEGA0 * OMEGA0 - wa_ * wa_) ** 2 + (2 * delta * wa_) ** 2) * DEG;
 
-  let maxA=20;
-  for(let i=0;i<=300;i++){
-    const a=amp(waMin + i/300*(waMax-waMin));
-    if(a>maxA) maxA=a;
+  let maxA = 20;
+  for (let i = 0; i <= 300; i++) {
+    const a = amp(waMin + i / 300 * (waMax - waMin));
+    if (a > maxA) maxA = a;
   }
-  maxA*=1.15;
-
-  // Rejilla
-  c.strokeStyle='#1c222c'; c.lineWidth=1;
-  for(let i=0;i<=10;i++){
-    const x=L+i/10*w; c.beginPath(); c.moveTo(x,T); c.lineTo(x,B); c.stroke();
-    const y=T+i/10*h; c.beginPath(); c.moveTo(L,y); c.lineTo(Rr,y); c.stroke();
-  }
+  maxA *= 1.12;
 
   // Curva
   c.beginPath();
-  c.strokeStyle='#3d7de0'; c.lineWidth=2.5;
-  for(let i=0;i<=300;i++){
-    const wv=waMin + i/300*(waMax-waMin);
-    const x=L+(wv-waMin)/(waMax-waMin)*w;
-    const y=B - amp(wv)/maxA * h;
-    i?c.lineTo(x,y):c.moveTo(x,y);
+  c.strokeStyle = '#3d7de0';
+  c.lineWidth = 2.5;
+  for (let i = 0; i <= 300; i++) {
+    const wv = waMin + i / 300 * (waMax - waMin);
+    const x = L + (wv - waMin) / (waMax - waMin) * w;
+    const y = B - amp(wv) / maxA * h;
+    i ? c.lineTo(x, y) : c.moveTo(x, y);
   }
   c.stroke();
 
   // Puntos
-  c.fillStyle='#3d7de0';
-  const points = [];
-  for(let i=0;i<=16;i++){
-    const wv=waMin + i/16*(waMax-waMin);
-    const a=amp(wv);
-    const x=L+(wv-waMin)/(waMax-waMin)*w;
-    const y=B - a/maxA * h;
-    c.beginPath(); c.arc(x,y,4,0,Math.PI*2); c.fill();
-    points.push({wa:wv, amp:a});
+  c.fillStyle = '#3d7de0';
+  for (let i = 0; i <= 16; i++) {
+    const wv = waMin + i / 16 * (waMax - waMin);
+    const x = L + (wv - waMin) / (waMax - waMin) * w;
+    const y = B - amp(wv) / maxA * h;
+    c.beginPath();
+    c.arc(x, y, 4, 0, Math.PI * 2);
+    c.fill();
   }
 
-  // ω0
-  const x0=L+(OMEGA0-waMin)/(waMax-waMin)*w;
-  c.strokeStyle='#888'; c.setLineDash([5,4]);
-  c.beginPath(); c.moveTo(x0,T); c.lineTo(x0,B); c.stroke();
-  c.setLineDash([]);
-
-  c.fillStyle='#ccc'; c.font='12px Segoe UI'; c.textAlign='center';
-  c.fillText('ωₐ [rad/s]', (L+Rr)/2, cv.height-18);
-  c.fillText('ω₀', x0, T-8);
-
-  // ===== Tabla de valores =====
+  // Tabla
   const tbody = $('resTableBody');
   tbody.innerHTML = '';
-  // Elegimos puntos representativos
   const tablePoints = [1.5, 2.0, 2.5, 2.8, 3.0, 3.2, 3.4, 3.6, 4.0, 4.5, 5.0, 5.5, 6.0];
-  tablePoints.forEach(wa=>{
+  tablePoints.forEach(wa => {
     const a = amp(wa);
-    const f = wa/(2*Math.PI);
-    const rpm = f*60;
+    const f = wa / (2 * Math.PI);
+    const rpm = f * 60;
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${wa.toFixed(2)}</td>
@@ -540,32 +456,39 @@ function drawResonance(){
   });
 }
 
-function loop(t){
-  if(!lastTime) lastTime=t;
-  const dt=Math.min(0.04,(t-lastTime)/1000); lastTime=t;
-  if(running) integrate(dt);
-  updateReadouts(); draw();
+function loop(t) {
+  if (!lastTime) lastTime = t;
+  const dt = Math.min(0.04, (t - lastTime) / 1000);
+  lastTime = t;
+  if (running) integrate(dt);
+  updateReadouts();
+  draw();
   requestAnimationFrame(loop);
 }
 
-function startForced(){ freeMode=false; running=true; lastTime=null; }
-function pause(){ running=false; }
-function reset(){
-  running=false; freeMode=false;
-  phi=0; omega=0; motorPhase=0; simT=0; thetaL=0;
-  histT=[]; histPhi=[]; histDrive=[];
-  rpmSlider.value=10; currentSlider.value=0; f0Input.value=2.0; phi0Input.value=90;
-  $('rpmVal').textContent='10.0 RPM'; $('currentVal').textContent='0.00 A';
+function startForced() { freeMode = false; running = true; lastTime = null; }
+function pause() { running = false; }
+function reset() {
+  running = false; freeMode = false;
+  phi = 0; omega = 0; motorPhase = 0; simT = 0;
+  historyT = []; historyPhi = [];
+  rpmSlider.value = 10;
+  currentSlider.value = 0;
+  f0Input.value = 2.0;
+  phi0Input.value = 90;
+  $('rpmVal').textContent = '10.0 RPM';
+  $('currentVal').textContent = '0.00 A';
   updateReadouts();
 }
-function freeRelease(){
-  freeMode=true;
-  rpmSlider.value=10; $('rpmVal').textContent='10.0 RPM';
-  let ang=parseFloat(phi0Input.value)||90;
-  ang=Math.max(-150,Math.min(150,ang));
-  phi=ang/DEG; omega=0; motorPhase=0; simT=0; thetaL=0;
-  histT=[]; histPhi=[]; histDrive=[];
-  running=true; lastTime=null;
+function freeRelease() {
+  freeMode = true;
+  rpmSlider.value = 10;
+  $('rpmVal').textContent = '10.0 RPM';
+  let ang = parseFloat(phi0Input.value) || 90;
+  phi = ang * Math.PI / 180;
+  omega = 0; motorPhase = 0; simT = 0;
+  historyT = []; historyPhi = [];
+  running = true; lastTime = null;
 }
 
 resize();
