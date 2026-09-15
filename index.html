@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Péndulo de Pohl - PHYWE (Realista)</title>
+<title>Péndulo de Pohl - PHYWE</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -102,14 +102,14 @@
 <body>
 
 <header>
-  <h1>Péndulo de Pohl — Oscilaciones Forzadas</h1>
-  <div class="subtitle">Aparato real · ω₀ ≈ 3.70 rad/s (10 osc ≈ 17 s) · Amplitud máxima ±150°</div>
+  <h1>Péndulo de Pohl — Oscilaciones Forzadas (PHYWE)</h1>
+  <div class="subtitle">ω₀ = 3.20 rad/s (T₀ = 1.962 s) · Amplitud máxima ±150° · Guía P2132785</div>
 </header>
 
 <div class="main">
   <div class="sidebar">
     <div class="control-group">
-      <label>Velocidad del motor (RPM) — más sensible</label>
+      <label>Velocidad del motor (RPM)</label>
       <input type="range" id="rpm" min="0" max="60" step="0.2" value="0">
       <div class="value" id="rpmVal">0.0 RPM</div>
     </div>
@@ -122,7 +122,7 @@
 
     <div class="control-group">
       <label>F₀ (amplitud de excitación)</label>
-      <input type="number" id="f0" value="2.2" step="0.1" style="width:100%; padding:6px; border-radius:4px; border:none;">
+      <input type="number" id="f0" value="0" step="0.1" min="0" style="width:100%; padding:6px; border-radius:4px; border:none;">
     </div>
 
     <div class="control-group">
@@ -148,9 +148,10 @@
     </div>
 
     <div class="tip">
-      <strong>Instrucciones:</strong><br>
-      1. Para oscilación libre: pon I_B y RPM en 0, escribe un ángulo inicial (ej. 80°) y pulsa “Oscilación libre”.<br>
-      2. Para resonancia: pon I_B ≈ 0.23–0.45 A y sube el RPM poco a poco (máximo cerca de 35 RPM).
+      <strong>Cómo encontrar la resonancia:</strong><br>
+      1. Pon I_B = 0.23 A o 0.45 A<br>
+      2. Pon un valor de F₀ (ej. 2.0 – 2.5)<br>
+      3. Sube el RPM poco a poco → el máximo está cerca de <strong>30.5 RPM</strong>
     </div>
   </div>
 
@@ -179,7 +180,7 @@
       </div>
       <div>
         <label style="font-size:0.88rem; color:#555;">F₀</label><br>
-        <input type="range" id="resF0" min="0.5" max="5" step="0.1" value="2.2" style="width:180px;">
+        <input type="range" id="resF0" min="0" max="5" step="0.1" value="2.2" style="width:180px;">
         <span id="resF0Val" style="font-family:monospace;">2.2</span>
       </div>
       <button onclick="drawResonance()" style="padding:8px 16px; background:#6c5ce7; color:white; border:none; border-radius:6px; cursor:pointer;">
@@ -189,23 +190,24 @@
 
     <canvas id="resCanvas" width="900" height="450" style="width:100%; background:#fff; border:1px solid #ccc;"></canvas>
     <p style="font-size:0.82rem; color:#666; margin-top:8px;">
-      El eje Y se ajusta solo → el pico nunca se corta.
+      Eje Y automático → el pico nunca se corta. Resonancia ≈ 30.5 RPM (ω₀ = 3.20 rad/s)
     </p>
   </div>
 </div>
 
 <script>
-const OMEGA0 = 3.70;          // 10 oscilaciones ≈ 17 s → T0 = 1.7 s
-const PHI_MAX = 150 * Math.PI / 180;   // ±150°
+const OMEGA0 = 3.20;               // Valor exacto de la guía PHYWE
+const PHI_MAX = 150 * Math.PI/180; // ±150°
 
 function dampingFromCurrent(Ib) {
+  // Valores calibrados según la guía
   const points = [
-    [0.00, 0.015],
-    [0.23, 0.17],
-    [0.45, 0.32],
-    [0.80, 0.65],
-    [2.00, 3.70],
-    [2.50, 5.50]
+    [0.00, 0.02],
+    [0.23, 0.18],
+    [0.45, 0.33],
+    [0.80, 0.67],
+    [2.00, 3.20],
+    [2.50, 4.80]
   ];
   for (let i = 0; i < points.length-1; i++) {
     if (Ib >= points[i][0] && Ib <= points[i+1][0]) {
@@ -255,7 +257,7 @@ currentSlider.oninput = () => {
 function getControls() {
   const rpm = +rpmSlider.value;
   const Ib = +currentSlider.value;
-  const f0 = freeMode ? 0 : (+f0Input.value || 2.2);
+  const f0 = freeMode ? 0 : (+f0Input.value || 0);
   const wa = freeMode ? 0 : (2 * Math.PI * rpm / 60);
   const delta = dampingFromCurrent(Ib);
   return { rpm, Ib, f0, wa, delta };
@@ -271,7 +273,7 @@ function updateReadouts() {
   let regime = 'Sin amortiguamiento';
   let color = '#74b9ff';
   if (delta > 0.05 && delta < OMEGA0*0.95) { regime = 'Subamortiguado'; color = '#00b894'; }
-  else if (Math.abs(delta - OMEGA0) < 0.2) { regime = 'Crítico'; color = '#fdcb6e'; }
+  else if (Math.abs(delta - OMEGA0) < 0.18) { regime = 'Crítico'; color = '#fdcb6e'; }
   else if (delta > OMEGA0) { regime = 'Sobreamortiguado'; color = '#e17055'; }
   
   const el = document.getElementById('regime');
@@ -287,15 +289,16 @@ function integrate(dt) {
   for (let i = 0; i < steps; i++) {
     const phase = motorPhase;
 
-    // Fuerza de excitación + topes elásticos en ±150°
-    let restoring = -OMEGA0*OMEGA0 * phi;
+    // Topes elásticos en ±150°
+    let extra = 0;
     if (Math.abs(phi) > PHI_MAX) {
       const excess = Math.abs(phi) - PHI_MAX;
-      restoring -= Math.sign(phi) * 80 * excess;   // resorte adicional fuerte
+      extra = -Math.sign(phi) * 90 * excess;
     }
 
     function deriv(p, o, ph) {
       const drive = f0 * Math.cos(ph);
+      const restoring = -OMEGA0*OMEGA0 * p + extra;
       return [o, drive + restoring - 2*delta*o];
     }
 
@@ -312,9 +315,9 @@ function integrate(dt) {
   }
   motorPhase %= 2*Math.PI;
 
-  // Limitar físicamente
-  if (phi >  PHI_MAX * 1.05) { phi =  PHI_MAX * 1.05; omega = 0; }
-  if (phi < -PHI_MAX * 1.05) { phi = -PHI_MAX * 1.05; omega = 0; }
+  // Seguridad
+  if (phi >  PHI_MAX*1.08) { phi =  PHI_MAX*1.08; omega *= 0.3; }
+  if (phi < -PHI_MAX*1.08) { phi = -PHI_MAX*1.08; omega *= 0.3; }
 
   historyT.push(simT);
   historyPhi.push(phi * 180 / Math.PI);
@@ -345,7 +348,7 @@ function draw() {
   ctx.lineTo(cx + 1.7*scale, cy - 4.1*scale);
   ctx.stroke();
 
-  // Motor (derecha)
+  // Motor
   const mx = W * 0.80, my = cy + 0.3*scale;
   ctx.fillStyle = '#e0e0e0';
   ctx.strokeStyle = '#333';
@@ -357,12 +360,12 @@ function draw() {
   ctx.textAlign = 'center';
   ctx.fillText('MOTOR', mx, my - 1.4*scale);
 
-  // Electroimanes (abajo del disco)
+  // Electroimanes
   ctx.fillStyle = '#b71c1c';
   ctx.fillRect(cx - 1.6*scale, cy + 1.7*scale, 1.1*scale, 0.7*scale);
   ctx.fillRect(cx + 0.5*scale, cy + 1.7*scale, 1.1*scale, 0.7*scale);
 
-  // Disco de cobre
+  // Disco
   ctx.beginPath();
   ctx.arc(cx, cy, R, 0, Math.PI*2);
   ctx.fillStyle = '#c17817';
@@ -371,7 +374,7 @@ function draw() {
   ctx.lineWidth = 3;
   ctx.stroke();
 
-  // Escala grande negra (como en la foto)
+  // Escala
   ctx.strokeStyle = '#111';
   ctx.lineWidth = 1.3;
   for (let ang = -160; ang <= 160; ang += 5) {
@@ -383,7 +386,6 @@ function draw() {
     ctx.lineTo(cx + r2*Math.sin(a), cy - r2*Math.cos(a));
     ctx.stroke();
   }
-  // Números de la escala
   ctx.fillStyle = '#111';
   ctx.font = '10px sans-serif';
   for (let ang = -150; ang <= 150; ang += 30) {
@@ -391,13 +393,13 @@ function draw() {
     ctx.fillText(ang, cx + R*1.32*Math.sin(a), cy - R*1.32*Math.cos(a) + 3);
   }
 
-  // Centro + eje
+  // Centro
   ctx.beginPath();
   ctx.arc(cx, cy, 0.22*scale, 0, Math.PI*2);
   ctx.fillStyle = '#333';
   ctx.fill();
 
-  // Muelle espiral (muy visible)
+  // Muelle espiral
   ctx.beginPath();
   for (let i = 0; i <= 160; i++) {
     const t = i / 160;
@@ -412,7 +414,7 @@ function draw() {
   ctx.lineWidth = 2.1;
   ctx.stroke();
 
-  // Palanca / varilla
+  // Palanca
   const leverAmp = 18 * Math.PI / 180;
   const thetaL = freeMode ? 0 : leverAmp * Math.sin(motorPhase);
   const xBot = cx - 2.0*scale * Math.sin(thetaL);
@@ -444,7 +446,7 @@ function draw() {
     ctx.fill();
   }
 
-  // Indicador (manecilla)
+  // Indicador
   const a = phi;
   const xInd = cx + R * 0.94 * Math.sin(a);
   const yInd = cy - R * 0.94 * Math.cos(a);
@@ -466,7 +468,7 @@ function draw() {
   const status = running ? (freeMode ? '▶ OSCILACIÓN LIBRE' : '▶ FORZADA') : '⏸ PAUSA';
   ctx.fillText(`${status}  |  RPM = ${rpm.toFixed(1)}  |  φ = ${(phi*180/Math.PI).toFixed(1)}°`, 12, 22);
 
-  // ===== Gráfico =====
+  // Gráfico
   const GW = canvasGraph.width, GH = canvasGraph.height;
   ctxG.fillStyle = '#ffffff';
   ctxG.fillRect(0, 0, GW, GH);
@@ -486,7 +488,6 @@ function draw() {
     }
     ctxG.stroke();
 
-    // Línea cero
     ctxG.strokeStyle = '#aaa';
     ctxG.beginPath();
     const y0 = GH-32 - ((0-(minP-0.15*span))/(span*1.3))*(GH-50);
@@ -532,9 +533,9 @@ function drawResonance() {
   const left = 70, right = canvas.width - 40;
   const top = 45, bottom = canvas.height - 55;
   const w = right - left, h = bottom - top;
-  const waMin = 1.0, waMax = 7.0;
+  const waMin = 1.0, waMax = 6.0;
 
-  // Calcular máximo real
+  // Máximo real para escalar
   let maxAmpDeg = 15;
   for (let i = 0; i <= 400; i++) {
     const wa_ = waMin + (i/400)*(waMax-waMin);
@@ -639,6 +640,7 @@ function reset() {
   historyT = []; historyPhi = [];
   rpmSlider.value = 0;
   currentSlider.value = 0;
+  f0Input.value = 0;
   phi0Input.value = 0;
   document.getElementById('rpmVal').textContent = '0.0 RPM';
   document.getElementById('currentVal').textContent = '0.00 A';
@@ -646,7 +648,6 @@ function reset() {
 }
 
 function freeOscillation() {
-  // Oscilación libre: motor apagado, se puede poner corriente o no
   freeMode = true;
   rpmSlider.value = 0;
   document.getElementById('rpmVal').textContent = '0.0 RPM';
