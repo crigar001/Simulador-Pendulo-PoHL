@@ -9,55 +9,56 @@
   :root{
     --bg:#12151c; --panel:#1b2029; --panel2:#232a35; --line:#333c4a;
     --ink:#e7ecf3; --dim:#9aa6b6; --accent:#e0533d; --accent2:#3d7de0;
-    --ok:#27b083; --warn:#e0b13d; --brass:#c88a3a;
+    --ok:#27b083; --warn:#e0b13d;
   }
   html,body{height:100%}
   body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--ink);
        min-height:100vh;display:flex;flex-direction:column;overflow:hidden}
   header{background:var(--panel);padding:10px 18px;border-bottom:1px solid var(--line)}
-  h1{font-size:1.15rem;font-weight:600;letter-spacing:.2px}
-  .subtitle{font-size:.8rem;color:var(--dim);margin-top:2px;font-variant-numeric:tabular-nums}
+  h1{font-size:1.15rem;font-weight:600}
+  .subtitle{font-size:.8rem;color:var(--dim);margin-top:2px}
   .main{display:flex;flex:1;min-height:0}
   .sidebar{width:290px;background:var(--panel);padding:14px;overflow-y:auto;border-right:1px solid var(--line)}
   .group{margin-bottom:13px}
   label{display:block;font-size:.78rem;margin-bottom:4px;color:var(--dim)}
-  input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
+  input[type=range]{width:100%;accent-color:var(--accent)}
   input[type=number]{width:100%;padding:7px;border-radius:6px;border:1px solid var(--line);
-       background:var(--panel2);color:var(--ink);font-family:inherit}
-  .value{font-family:'Cascadia Code',ui-monospace,monospace;font-size:1.02rem;color:var(--accent);
-       text-align:right;font-variant-numeric:tabular-nums}
+       background:var(--panel2);color:var(--ink)}
+  .value{font-family:monospace;font-size:1.02rem;color:var(--accent);text-align:right}
   .buttons{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:12px 0 8px}
-  button{padding:9px 4px;border:none;border-radius:7px;font-weight:600;cursor:pointer;
-       font-size:.85rem;font-family:inherit;transition:filter .12s}
+  button{padding:9px 4px;border:none;border-radius:7px;font-weight:600;cursor:pointer;font-size:.85rem}
   button:hover{filter:brightness(1.13)}
-  button:active{filter:brightness(.92)}
   .btn-start{background:var(--ok);color:#06251b}
   .btn-pause{background:var(--warn);color:#2a2200}
   .btn-reset{background:#5a6472;color:#fff}
   .btn-free{background:var(--accent2);color:#fff;width:100%;padding:11px;margin-top:6px}
   .btn-res{background:#7a5cff;color:#fff;width:100%;padding:10px;margin-top:8px}
   .readings{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:11px;
-       font-family:'Cascadia Code',ui-monospace,monospace;font-size:.83rem;margin-top:14px;
-       font-variant-numeric:tabular-nums}
+       font-family:monospace;font-size:.83rem;margin-top:14px}
   .readings div{display:flex;justify-content:space-between;margin:5px 0}
   .readings .k{color:var(--dim)}
   #regime{margin-top:8px;font-weight:600;text-align:center;padding:5px;border-radius:5px;background:#0d1016}
   .tip{background:var(--panel2);border-left:3px solid var(--accent);padding:10px;margin-top:14px;
        font-size:.77rem;line-height:1.45;border-radius:0 6px 6px 0;color:#c6cfdb}
-  .tip b{color:var(--ink)}
   .divider{border:0;border-top:1px solid var(--line);margin:14px 0 10px}
-  .divider-lbl{font-size:.7rem;text-transform:none;color:var(--dim);letter-spacing:.4px;margin-bottom:2px}
+  .divider-lbl{font-size:.7rem;color:var(--dim);margin-bottom:2px}
   .canvas-area{flex:1;display:flex;flex-direction:column;background:#0c0e13;min-width:0}
   canvas{display:block}
   #scene{width:100%;flex:1 1 auto;min-height:0}
   #graph{width:100%;height:180px;border-top:1px solid var(--line)}
-  #resModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;
+  #resModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:100;
        align-items:center;justify-content:center}
-  .modal-card{background:var(--panel);padding:18px;border-radius:12px;max-width:960px;width:96%;
-       color:var(--ink);border:1px solid var(--line)}
+  .modal-card{background:var(--panel);padding:18px;border-radius:12px;max-width:1100px;width:97%;
+       color:var(--ink);border:1px solid var(--line);max-height:95vh;overflow:auto}
   .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-  .modal-ctrls{display:flex;gap:22px;margin-bottom:12px;flex-wrap:wrap;align-items:center;font-size:.85rem}
-  #resCanvas{width:100%;background:#0c0e13;border:1px solid var(--line);border-radius:8px}
+  .modal-ctrls{display:flex;gap:22px;margin-bottom:14px;flex-wrap:wrap;align-items:center;font-size:.85rem}
+  .res-content{display:flex;gap:20px;flex-wrap:wrap}
+  #resCanvas{background:#0c0e13;border:1px solid var(--line);border-radius:8px}
+  .res-table{font-size:0.82rem;border-collapse:collapse;min-width:220px}
+  .res-table th,.res-table td{padding:5px 10px;border:1px solid var(--line);text-align:center}
+  .res-table th{background:var(--panel2)}
+  .eq-box{background:var(--panel2);padding:10px 14px;border-radius:8px;margin-bottom:14px;
+          font-family:monospace;font-size:0.9rem;line-height:1.5}
 </style>
 </head>
 <body>
@@ -69,12 +70,11 @@
 
 <div class="main">
   <div class="sidebar">
-
     <div class="divider-lbl">MOTOR EXCITADOR (forzada)</div>
     <div class="group">
-      <label>Velocidad del motor</label>
-      <input type="range" id="rpm" min="0" max="60" step="0.2" value="0">
-      <div class="value" id="rpmVal">0.0 RPM</div>
+      <label>Velocidad del motor (10 – 70 RPM)</label>
+      <input type="range" id="rpm" min="10" max="70" step="0.2" value="10">
+      <div class="value" id="rpmVal">10.0 RPM</div>
     </div>
     <div class="group">
       <label>F₀ — amplitud de excitación</label>
@@ -82,7 +82,7 @@
     </div>
 
     <hr class="divider">
-    <div class="divider-lbl">FRENO DE FOUCAULT (amortiguamiento)</div>
+    <div class="divider-lbl">FRENO DE FOUCAULT</div>
     <div class="group">
       <label>Corriente del freno I<sub>B</sub></label>
       <input type="range" id="current" min="0" max="2.5" step="0.05" value="0.00">
@@ -96,14 +96,13 @@
     </div>
 
     <hr class="divider">
-    <div class="divider-lbl">OSCILACIÓN LIBRE (sin motor)</div>
+    <div class="divider-lbl">OSCILACIÓN LIBRE</div>
     <div class="group">
       <label>Ángulo inicial φ₀ (°)</label>
       <input type="number" id="phi0" value="90" step="5" min="-150" max="150">
     </div>
     <button class="btn-free" onclick="freeRelease()">Soltar desde φ₀</button>
-
-    <button class="btn-res" onclick="showResonance()">Curva de resonancia</button>
+    <button class="btn-res" onclick="showResonance()">Curva de resonancia + Tabla</button>
 
     <div class="readings">
       <div><span class="k">ωₐ motor</span><span id="wa">0.000 rad/s</span></div>
@@ -114,8 +113,8 @@
     </div>
 
     <div class="tip">
-      <b>Libre:</b> pon I<sub>B</sub> = 0 y pulsa «Soltar desde φ₀».<br><br>
-      <b>Resonancia:</b> I<sub>B</sub> ≈ 0.23–0.45 A, F₀ = 2.0 y sube el motor → máximo cerca de <b>30.5 RPM</b>.
+      <b>Resonancia:</b> I<sub>B</sub> ≈ 0.23–0.45 A · F₀ = 2.0<br>
+      Sube el motor desde 10 RPM → el máximo está cerca de <b>30.5 RPM</b>.
     </div>
   </div>
 
@@ -125,25 +124,50 @@
   </div>
 </div>
 
+<!-- Modal Resonancia con Tabla -->
 <div id="resModal">
   <div class="modal-card">
     <div class="modal-head">
-      <h2 style="font-size:1.2rem;font-weight:600">Curva de resonancia — Φ(ωₐ)</h2>
+      <h2 style="font-size:1.2rem;font-weight:600">Curva de Resonancia + Tabla de valores</h2>
       <button class="btn-reset" style="padding:7px 14px" onclick="document.getElementById('resModal').style.display='none'">Cerrar</button>
     </div>
+
+    <div class="eq-box">
+      Ecuación de la amplitud estacionaria:<br>
+      <b>Φ<sub>a</sub> = F₀ / √[ (ω₀² − ωₐ²)² + (2δ ωₐ)² ]</b>
+    </div>
+
     <div class="modal-ctrls">
       <div>
         <label style="color:var(--dim)">I<sub>B</sub></label>
-        <input type="range" id="resIb" min="0" max="2.5" step="0.05" value="0.23" style="width:180px;vertical-align:middle">
-        <span id="resIbVal" style="font-family:monospace">0.23 A</span>
+        <input type="range" id="resIb" min="0" max="2.5" step="0.05" value="0.23" style="width:160px;vertical-align:middle">
+        <span id="resIbVal">0.23 A</span>
       </div>
       <div>
         <label style="color:var(--dim)">F₀</label>
-        <input type="range" id="resF0" min="0" max="5" step="0.1" value="2.0" style="width:180px;vertical-align:middle">
-        <span id="resF0Val" style="font-family:monospace">2.0</span>
+        <input type="range" id="resF0" min="0" max="5" step="0.1" value="2.0" style="width:160px;vertical-align:middle">
+        <span id="resF0Val">2.0</span>
       </div>
     </div>
-    <canvas id="resCanvas" width="900" height="430"></canvas>
+
+    <div class="res-content">
+      <canvas id="resCanvas" width="620" height="400"></canvas>
+      
+      <div>
+        <h3 style="margin-bottom:8px;font-size:0.95rem">Tabla de valores</h3>
+        <table class="res-table" id="resTable">
+          <thead>
+            <tr>
+              <th>ωₐ (rad/s)</th>
+              <th>f (Hz)</th>
+              <th>RPM</th>
+              <th>Amplitud Φ (°)</th>
+            </tr>
+          </thead>
+          <tbody id="resTableBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -151,7 +175,7 @@
 const OMEGA0 = 3.20;
 const DEG = 180/Math.PI;
 const DIV = 7.5;
-const PHI_MAX = 20 * DIV / DEG;   // ±150°
+const PHI_MAX = 20 * DIV / DEG;
 
 function dampingFromCurrent(Ib){
   const pts=[[0,0.03],[0.23,0.18],[0.45,0.33],[0.80,0.67],[2.0,3.20],[2.3,3.80],[2.5,4.40]];
@@ -208,23 +232,19 @@ function updateReadouts(){
     if(freeMode){
       if(delta<0.05){regime='Libre — sin amortiguar';color='var(--accent2)';}
       else if(Math.abs(delta-OMEGA0)<0.20){regime='Amortiguamiento crítico';color='var(--warn)';}
-      else if(delta>OMEGA0){regime='Reptante (sobreamortiguado)';color='var(--accent)';}
+      else if(delta>OMEGA0){regime='Reptante';color='var(--accent)';}
       else{regime='Libre — subamortiguado';color='var(--ok)';}
-    }else{
-      regime='Forzada';color='var(--ok)';
-    }
+    }else{ regime='Forzada'; color='var(--ok)'; }
   }
   const el=$('regime'); el.textContent=regime; el.style.color=color;
 }
 
-// ---------- INTEGRADOR CORREGIDO (más estable y simétrico) ----------
 function integrate(dt){
   const {f0,wa,delta}=getControls();
   const steps=Math.max(1,Math.ceil(dt/0.0035));
   const h=dt/steps;
 
   for(let i=0;i<steps;i++){
-    // Tope suave y completamente simétrico
     let wall=0;
     if(Math.abs(phi)>PHI_MAX){
       const excess=Math.abs(phi)-PHI_MAX;
@@ -246,7 +266,6 @@ function integrate(dt){
   }
   motorPhase = ((motorPhase % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
 
-  // Seguridad suave
   if(phi> PHI_MAX*1.03){phi= PHI_MAX*1.03; if(omega>0) omega*=0.55;}
   if(phi<-PHI_MAX*1.03){phi=-PHI_MAX*1.03; if(omega<0) omega*=0.55;}
 
@@ -257,7 +276,7 @@ function integrate(dt){
   while(histT.length>0 && simT-histT[0]>18){histT.shift();histPhi.shift();histDrive.shift();}
 }
 
-// ---------- DIBUJO (se mantiene casi igual al tuyo) ----------
+// ---------- Dibujo del aparato (se mantiene) ----------
 function draw(){
   const W=cScene.clientWidth, H=cScene.clientHeight;
   const {rpm,Ib}=getControls();
@@ -268,15 +287,10 @@ function draw(){
 
   const cx=W*0.40, cy=H*0.52;
   const R=Math.min(W*0.40,H*0.44);
-  const Rw=R*0.80;
-  const Rin=Rw*0.80;
-  const hubR=Rw*0.14;
+  const Rw=R*0.80, Rin=Rw*0.80, hubR=Rw*0.14;
 
   ctx.fillStyle='#8a6236';
   ctx.fillRect(0,cy+R*1.02,W,H-(cy+R*1.02));
-  const wood=ctx.createLinearGradient(0,cy+R*1.02,0,H);
-  wood.addColorStop(0,'rgba(255,255,255,.06)');wood.addColorStop(1,'rgba(0,0,0,.25)');
-  ctx.fillStyle=wood; ctx.fillRect(0,cy+R*1.02,W,H-(cy+R*1.02));
   ctx.fillStyle='#c9cdd4';
   ctx.fillRect(cx-R*0.055,cy,R*0.11,R*1.03);
 
@@ -286,9 +300,9 @@ function draw(){
   drawSpiral(cx,cy,hubR,Rin,phi,thetaL);
   drawDrive(W,H,cx,cy,R,Rin);
 
-  ctx.fillStyle='#e7ecf3'; ctx.font='600 13px Segoe UI, sans-serif'; ctx.textAlign='left';
+  ctx.fillStyle='#e7ecf3'; ctx.font='600 13px Segoe UI'; ctx.textAlign='left';
   const st=running?(freeMode?'● LIBRE':'● FORZADA'):'❚❚ PAUSA';
-  ctx.fillText(`${st}   φ = ${(phi*DEG).toFixed(1)}°  (${(phi*DEG/DIV).toFixed(1)} div)   RPM = ${rpm.toFixed(1)}`, 14, 22);
+  ctx.fillText(`${st}   φ = ${(phi*DEG).toFixed(1)}°   RPM = ${rpm.toFixed(1)}`, 14, 22);
 
   drawGraph();
 }
@@ -312,20 +326,19 @@ function drawScale(cx,cy,R){
     ctx.lineWidth=(d===0)?2.5:(even?1.6:0.9);
     ctx.stroke();
   }
-  ctx.fillStyle='#aeb7c4'; ctx.font='11px Segoe UI, sans-serif';
+  ctx.fillStyle='#aeb7c4'; ctx.font='11px Segoe UI';
   ctx.textAlign='center'; ctx.textBaseline='middle';
   for(let d=-20; d<=20; d+=4){
     if(d===0) continue;
-    const a=d*DIV/DEG, r=R*1.00;
-    ctx.fillText(Math.abs(d), cx+r*Math.sin(a)*0.965, cy-r*Math.cos(a)*0.965);
+    const a=d*DIV/DEG;
+    ctx.fillText(Math.abs(d), cx+R*0.965*Math.sin(a), cy-R*0.965*Math.cos(a));
   }
-  ctx.fillStyle='#e0533d'; ctx.font='600 11px Segoe UI, sans-serif';
+  ctx.fillStyle='#e0533d'; ctx.font='600 11px Segoe UI';
   ctx.fillText('0', cx, cy-R*0.985);
 }
 
 function drawWheel(cx,cy,Rw,Rin,hubR,ang){
   ctx.save(); ctx.translate(cx,cy); ctx.rotate(ang);
-
   const g=ctx.createRadialGradient(0,0,Rin,0,0,Rw);
   g.addColorStop(0,'#7a4e22'); g.addColorStop(.5,'#c88a3a');
   g.addColorStop(.75,'#e2ab5f'); g.addColorStop(1,'#8a5a28');
@@ -334,23 +347,18 @@ function drawWheel(cx,cy,Rw,Rin,hubR,ang){
   ctx.lineWidth=2; ctx.strokeStyle='#5a3a18';
   ctx.beginPath(); ctx.arc(0,0,Rw,0,Math.PI*2); ctx.stroke();
   ctx.beginPath(); ctx.arc(0,0,Rin,0,Math.PI*2); ctx.stroke();
-  ctx.beginPath(); ctx.arc(0,0,(Rw+Rin)/2,-2.3,-1.1);
-  ctx.strokeStyle='rgba(255,240,210,.55)'; ctx.lineWidth=(Rw-Rin)*0.35; ctx.stroke();
 
-  const spokeC=ctx.createLinearGradient(-Rin,0,Rin,0);
-  spokeC.addColorStop(0,'#8a5a28');spokeC.addColorStop(.5,'#d09a52');spokeC.addColorStop(1,'#8a5a28');
   for(let k=0;k<4;k++){
     ctx.save(); ctx.rotate(k*Math.PI/2);
-    ctx.fillStyle=spokeC;
+    ctx.fillStyle='#b07a40';
     ctx.beginPath();
     ctx.moveTo(-Rin*0.07,-hubR); ctx.lineTo(Rin*0.07,-hubR);
     ctx.lineTo(Rin*0.045,-Rin); ctx.lineTo(-Rin*0.045,-Rin); ctx.closePath(); ctx.fill();
     ctx.restore();
   }
 
-  const hg=ctx.createRadialGradient(-hubR*0.3,-hubR*0.3,1,0,0,hubR);
-  hg.addColorStop(0,'#e9e9ee');hg.addColorStop(1,'#7d838c');
-  ctx.beginPath(); ctx.arc(0,0,hubR,0,Math.PI*2); ctx.fillStyle=hg; ctx.fill();
+  ctx.beginPath(); ctx.arc(0,0,hubR,0,Math.PI*2);
+  ctx.fillStyle='#c0c4cc'; ctx.fill();
   ctx.strokeStyle='#4a4f57'; ctx.lineWidth=1.5; ctx.stroke();
 
   ctx.beginPath();
@@ -360,48 +368,33 @@ function drawWheel(cx,cy,Rw,Rin,hubR,ang){
   ctx.lineTo(3,-Rw*0.62);
   ctx.closePath();
   ctx.fillStyle='#d0281f'; ctx.fill();
-  ctx.strokeStyle='#7a140f'; ctx.lineWidth=1; ctx.stroke();
-
   ctx.restore();
 }
 
 function drawSpiral(cx,cy,hubR,Rin,phiIn,thL){
   const turns=4 + (thL - phiIn)*0.35;
   ctx.beginPath();
-  const N=220;
-  for(let i=0;i<=N;i++){
-    const t=i/N;
+  for(let i=0;i<=220;i++){
+    const t=i/220;
     const a=phiIn + t*turns*2*Math.PI - Math.PI/2;
     const r=hubR*1.05 + t*(Rin*0.90-hubR*1.05);
     const x=cx+r*Math.cos(a), y=cy+r*Math.sin(a);
     if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
   }
   ctx.strokeStyle='#b5651d'; ctx.lineWidth=2.2; ctx.stroke();
-  ctx.strokeStyle='rgba(255,220,170,.35)'; ctx.lineWidth=0.8; ctx.stroke();
 }
 
 function drawBrake(px,py,s,Ib){
   ctx.fillStyle='#2b2f36';
   ctx.fillRect(px-s*1.6, py-s*0.2, s*3.2, s*2.4);
-  ctx.fillStyle='#1c1f24';
-  ctx.fillRect(px-s*0.55, py-s*0.6, s*1.1, s*1.1);
-  ctx.fillStyle='#3a3f47';
-  ctx.fillRect(px-s*1.6,py-s*0.6,s*1.05,s*1.1);
-  ctx.fillRect(px+s*0.55,py-s*0.6,s*1.05,s*1.1);
   ctx.fillStyle='#8f2d1c';
   for(let side of [-1,1]){
     const bx=px+side*s*1.05;
     ctx.fillRect(bx-s*0.42, py+s*0.05, s*0.84, s*1.7);
-    ctx.strokeStyle='#5a1a10'; ctx.lineWidth=1;
-    for(let i=0;i<6;i++){
-      const yy=py+s*0.15+i*s*0.27;
-      ctx.beginPath(); ctx.moveTo(bx-s*0.42,yy); ctx.lineTo(bx+s*0.42,yy); ctx.stroke();
-    }
   }
   if(Ib>0.01){
     const gl=ctx.createRadialGradient(px,py,1,px,py,s*1.2);
-    const a=Math.min(0.55,Ib*0.28);
-    gl.addColorStop(0,`rgba(120,180,255,${a})`);
+    gl.addColorStop(0,`rgba(120,180,255,${Math.min(0.5,Ib*0.25)})`);
     gl.addColorStop(1,'rgba(120,180,255,0)');
     ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(px,py,s*1.2,0,Math.PI*2); ctx.fill();
   }
@@ -421,25 +414,16 @@ function drawDrive(W,H,cx,cy,R,Rin){
 
   const mx=W*0.86, my=cy+R*0.30, mR=R*0.30;
   ctx.fillStyle='#d7dbe1';
-  roundRect(mx-mR*0.55,my-mR*0.85,mR*1.1,mR*1.7,6); ctx.fill();
-  ctx.strokeStyle='#8b929c'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.fillRect(mx-mR*0.55,my-mR*0.85,mR*1.1,mR*1.7);
+  ctx.strokeStyle='#8b929c'; ctx.lineWidth=1.5; ctx.strokeRect(mx-mR*0.55,my-mR*0.85,mR*1.1,mR*1.7);
   ctx.fillStyle='#4a4f57'; ctx.font='600 10px Segoe UI'; ctx.textAlign='center';
   ctx.fillText('MOTOR', mx, my-mR*0.95);
 
   const ecc=mR*0.42;
-  ctx.beginPath(); ctx.arc(mx,my,mR*0.55,0,Math.PI*2);
-  ctx.fillStyle='#9aa2ad'; ctx.fill(); ctx.strokeStyle='#5a6069'; ctx.stroke();
   const ex=mx+ecc*Math.cos(motorPhase), ey=my+ecc*Math.sin(motorPhase);
   ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(xL,yL);
   ctx.strokeStyle='#5b6b82'; ctx.lineWidth=3; ctx.stroke();
   ctx.beginPath(); ctx.arc(ex,ey,4,0,Math.PI*2); ctx.fillStyle='#1c1f24'; ctx.fill();
-  ctx.beginPath(); ctx.arc(mx,my,3,0,Math.PI*2); ctx.fillStyle='#1c1f24'; ctx.fill();
-}
-
-function roundRect(x,y,w,h,r){
-  ctx.beginPath();
-  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
-  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
 }
 
 function drawGraph(){
@@ -447,29 +431,13 @@ function drawGraph(){
   ctxG.fillStyle='#0c0e13'; ctxG.fillRect(0,0,W,H);
   const L=48,B=H-22,T=14,Rr=W-14;
 
-  ctxG.strokeStyle='#2a303a'; ctxG.lineWidth=1;
-  ctxG.beginPath(); ctxG.moveTo(L,T); ctxG.lineTo(L,B); ctxG.lineTo(Rr,B); ctxG.stroke();
-
   if(histT.length>4){
     const t0=histT[0], t1=histT[histT.length-1];
     const pmax=Math.max(30,...histPhi.map(Math.abs));
     const min=-pmax*1.1, span=pmax*2.2;
     const X=t=>L+((t-t0)/(t1-t0+1e-6))*(Rr-L);
-    const yz=(v)=>B-((v-min)/span)*(B-T);
+    const yz=v=>B-((v-min)/span)*(B-T);
 
-    ctxG.strokeStyle='#232a35'; ctxG.setLineDash([3,4]);
-    ctxG.beginPath(); ctxG.moveTo(L,yz(0)); ctxG.lineTo(Rr,yz(0)); ctxG.stroke();
-    ctxG.setLineDash([]);
-
-    if(!freeMode){
-      const dmax=Math.max(...histDrive.map(Math.abs))||1;
-      ctxG.strokeStyle='rgba(224,83,61,.45)'; ctxG.lineWidth=1.3; ctxG.beginPath();
-      for(let i=0;i<histT.length;i++){
-        const y=yz(histDrive[i]/dmax*pmax*0.55);
-        i?ctxG.lineTo(X(histT[i]),y):ctxG.moveTo(X(histT[i]),y);
-      }
-      ctxG.stroke();
-    }
     ctxG.strokeStyle='#3d7de0'; ctxG.lineWidth=1.8; ctxG.beginPath();
     for(let i=0;i<histT.length;i++){
       const y=yz(histPhi[i]);
@@ -477,10 +445,11 @@ function drawGraph(){
     }
     ctxG.stroke();
   }
-  ctxG.fillStyle='#9aa6b6'; ctxG.font='11px Segoe UI'; ctxG.textAlign='left';
-  ctxG.fillText('φ [°] vs t [s]', L, 11);
+  ctxG.fillStyle='#9aa6b6'; ctxG.font='11px Segoe UI';
+  ctxG.fillText('φ [°] vs t [s]', 48, 14);
 }
 
+// ---------- Resonancia con tabla ----------
 function showResonance(){
   $('resModal').style.display='flex';
   const {Ib,f0}=getControls();
@@ -494,37 +463,81 @@ function showResonance(){
 
 function drawResonance(){
   const cv=$('resCanvas'), c=cv.getContext('2d');
-  const Ib=+$('resIb').value, f0=+$('resF0').value, delta=dampingFromCurrent(Ib);
-  const {wa}=getControls();
+  const Ib=+$('resIb').value, f0=+$('resF0').value;
+  const delta=dampingFromCurrent(Ib);
+
   c.fillStyle='#0c0e13'; c.fillRect(0,0,cv.width,cv.height);
-  const L=70,Rr=cv.width-40,T=40,B=cv.height-55, w=Rr-L,h=B-T, waMin=1,waMax=6;
 
-  const amp=wa_=>Math.abs(f0)/Math.sqrt((OMEGA0*OMEGA0-wa_*wa_)**2+(2*delta*wa_)**2)*DEG;
-  let maxA=15;
-  for(let i=0;i<=300;i++){const a=amp(waMin+i/300*(waMax-waMin)); if(a>maxA)maxA=a;}
-  maxA*=1.12;
+  const L=60, Rr=cv.width-30, T=40, B=cv.height-50;
+  const w=Rr-L, h=B-T;
+  const waMin=1.0, waMax=7.0;
 
+  const amp = wa_ => Math.abs(f0) / Math.sqrt((OMEGA0*OMEGA0 - wa_*wa_)**2 + (2*delta*wa_)**2) * DEG;
+
+  let maxA=20;
+  for(let i=0;i<=300;i++){
+    const a=amp(waMin + i/300*(waMax-waMin));
+    if(a>maxA) maxA=a;
+  }
+  maxA*=1.15;
+
+  // Rejilla
   c.strokeStyle='#1c222c'; c.lineWidth=1;
   for(let i=0;i<=10;i++){
-    const x=L+i/10*w; c.beginPath();c.moveTo(x,T);c.lineTo(x,B);c.stroke();
-    const y=T+i/10*h; c.beginPath();c.moveTo(L,y);c.lineTo(Rr,y);c.stroke();
+    const x=L+i/10*w; c.beginPath(); c.moveTo(x,T); c.lineTo(x,B); c.stroke();
+    const y=T+i/10*h; c.beginPath(); c.moveTo(L,y); c.lineTo(Rr,y); c.stroke();
   }
-  c.strokeStyle='#3d7de0'; c.lineWidth=2.5; c.beginPath();
+
+  // Curva
+  c.beginPath();
+  c.strokeStyle='#3d7de0'; c.lineWidth=2.5;
   for(let i=0;i<=300;i++){
-    const wv=waMin+i/300*(waMax-waMin);
-    const x=L+(wv-waMin)/(waMax-waMin)*w, y=B-amp(wv)/maxA*h;
+    const wv=waMin + i/300*(waMax-waMin);
+    const x=L+(wv-waMin)/(waMax-waMin)*w;
+    const y=B - amp(wv)/maxA * h;
     i?c.lineTo(x,y):c.moveTo(x,y);
   }
   c.stroke();
+
+  // Puntos
+  c.fillStyle='#3d7de0';
+  const points = [];
+  for(let i=0;i<=16;i++){
+    const wv=waMin + i/16*(waMax-waMin);
+    const a=amp(wv);
+    const x=L+(wv-waMin)/(waMax-waMin)*w;
+    const y=B - a/maxA * h;
+    c.beginPath(); c.arc(x,y,4,0,Math.PI*2); c.fill();
+    points.push({wa:wv, amp:a});
+  }
+
+  // ω0
   const x0=L+(OMEGA0-waMin)/(waMax-waMin)*w;
-  c.strokeStyle='#5a6472'; c.setLineDash([5,4]);
-  c.beginPath();c.moveTo(x0,T);c.lineTo(x0,B);c.stroke();c.setLineDash([]);
-  c.fillStyle='#9aa6b6'; c.font='12px Segoe UI'; c.textAlign='center';
-  c.fillText('ω₀ = 3.20', x0, T-8);
-  c.fillText('ωₐ [rad/s]', (L+Rr)/2, cv.height-16);
-  c.save(); c.translate(20,(T+B)/2); c.rotate(-Math.PI/2); c.fillText('Φ [°]',0,0); c.restore();
-  c.textAlign='left'; c.fillStyle='#e7ecf3'; c.font='600 13px Segoe UI';
-  c.fillText(`I_B = ${Ib.toFixed(2)} A   ·   δ = ${delta.toFixed(3)} s⁻¹`, L, 24);
+  c.strokeStyle='#888'; c.setLineDash([5,4]);
+  c.beginPath(); c.moveTo(x0,T); c.lineTo(x0,B); c.stroke();
+  c.setLineDash([]);
+
+  c.fillStyle='#ccc'; c.font='12px Segoe UI'; c.textAlign='center';
+  c.fillText('ωₐ [rad/s]', (L+Rr)/2, cv.height-18);
+  c.fillText('ω₀', x0, T-8);
+
+  // ===== Tabla de valores =====
+  const tbody = $('resTableBody');
+  tbody.innerHTML = '';
+  // Elegimos puntos representativos
+  const tablePoints = [1.5, 2.0, 2.5, 2.8, 3.0, 3.2, 3.4, 3.6, 4.0, 4.5, 5.0, 5.5, 6.0];
+  tablePoints.forEach(wa=>{
+    const a = amp(wa);
+    const f = wa/(2*Math.PI);
+    const rpm = f*60;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${wa.toFixed(2)}</td>
+      <td>${f.toFixed(3)}</td>
+      <td>${rpm.toFixed(1)}</td>
+      <td><b>${a.toFixed(1)}°</b></td>`;
+    tbody.appendChild(tr);
+  });
 }
 
 function loop(t){
@@ -541,15 +554,14 @@ function reset(){
   running=false; freeMode=false;
   phi=0; omega=0; motorPhase=0; simT=0; thetaL=0;
   histT=[]; histPhi=[]; histDrive=[];
-  rpmSlider.value=0; currentSlider.value=0; f0Input.value=2.0; phi0Input.value=90;
-  $('rpmVal').textContent='0.0 RPM'; $('currentVal').textContent='0.00 A';
+  rpmSlider.value=10; currentSlider.value=0; f0Input.value=2.0; phi0Input.value=90;
+  $('rpmVal').textContent='10.0 RPM'; $('currentVal').textContent='0.00 A';
   updateReadouts();
 }
 function freeRelease(){
   freeMode=true;
-  rpmSlider.value=0; $('rpmVal').textContent='0.0 RPM';
-  let ang=parseFloat(phi0Input.value);
-  if(isNaN(ang)) ang=90;
+  rpmSlider.value=10; $('rpmVal').textContent='10.0 RPM';
+  let ang=parseFloat(phi0Input.value)||90;
   ang=Math.max(-150,Math.min(150,ang));
   phi=ang/DEG; omega=0; motorPhase=0; simT=0; thetaL=0;
   histT=[]; histPhi=[]; histDrive=[];
